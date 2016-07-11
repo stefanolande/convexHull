@@ -5,6 +5,8 @@
 #include "lib/dcel/drawable_dcel.h"
 #include <eigen3/Eigen/Dense>
 #include <iostream>
+#include <algorithm>
+#include <cstdlib>
 
 class ConvexHullCreator {
     std::vector<Dcel::Vertex*> vertexVec;
@@ -14,7 +16,10 @@ public:
     void calculate();
 private:
     void getVertices();
+    void findValidPermutation();
     void createTetrahedron();
+    void addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
+    void adjustTwin(Dcel::HalfEdge* he);
 };
 
 #endif
