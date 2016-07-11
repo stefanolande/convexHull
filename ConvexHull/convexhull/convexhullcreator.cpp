@@ -14,7 +14,6 @@ void ConvexHullCreator::calculate(){
     //clear the initial dcel
     dcel->reset();
 
-
     //get a random permutation that starts with 4 non coplanar vertices
     bool coplanar = true;
 
@@ -41,35 +40,46 @@ void ConvexHullCreator::calculate(){
     } while(coplanar);
 
     //create the inital tetrahedron
-
-    //add the 4 point
-    this->dcel->addVertex(*this->vertexVec[0]);
-    this->dcel->addVertex(*this->vertexVec[1]);
-    this->dcel->addVertex(*this->vertexVec[2]);
-    this->dcel->addVertex(*this->vertexVec[3]);
-
-    //add the 12 half edges and set the twins
-    for(int i=0; i<4; i++){
-        for(int j=i+1; j<4; j++){
-            Dcel::HalfEdge* heOut = this->dcel->addHalfEdge();
-            heOut->setFromVertex(this->vertexVec[i]);
-            heOut->setToVertex(this->vertexVec[j]);
-
-            Dcel::HalfEdge* heIn = this->dcel->addHalfEdge();
-            heIn->setFromVertex(this->vertexVec[j]);
-            heIn->setToVertex(this->vertexVec[i]);
-
-            heOut->setTwin(heIn);
-            heIn->setTwin(heOut);
-        }
-    }
-
-
-    std::cout << "#HE " << dcel->getNumberHalfEdges() << std::endl;
-
+    createTetrahedron();
 }
 
+/**
+ * @brief ConvexHullCreator::createTetrahedron
+ */
+void ConvexHullCreator::createTetrahedron(){
+    //add the 4 point
+    Dcel::Vertex* a = this->dcel->addVertex(*this->vertexVec[0]);
+    Dcel::Vertex* b = this->dcel->addVertex(*this->vertexVec[1]);
+    Dcel::Vertex* c = this->dcel->addVertex(*this->vertexVec[2]);
+    Dcel::Vertex* d = this->dcel->addVertex(*this->vertexVec[3]);
 
+    Dcel::HalfEdge* he1In = this->dcel->addHalfEdge();
+    Dcel::HalfEdge* he2In = this->dcel->addHalfEdge();
+    Dcel::HalfEdge* he3In = this->dcel->addHalfEdge();
+
+    he1In->setFromVertex(b);
+    he1In->setToVertex(a);
+    he1In->setNext(he3In);
+    he1In->setPrev(he2In);
+
+    he2In->setFromVertex(c);
+    he2In->setToVertex(b);
+    he2In->setNext(he1In);
+    he2In->setPrev(he3In);
+
+    he3In->setFromVertex(a);
+    he3In->setToVertex(c);
+    he3In->setNext(he2In);
+    he3In->setPrev(he1In);
+
+    Dcel::Face* face1 = this->dcel->addFace();
+    face1->setOuterHalfEdge(he1In);
+    he1In->setFace(face1);
+    he2In->setFace(face1);
+    he3In->setFace(face1);
+
+    std::cout << "#HE " << dcel->getNumberHalfEdges() << std::endl;
+}
 
 
 void ConvexHullCreator::getVertices(){

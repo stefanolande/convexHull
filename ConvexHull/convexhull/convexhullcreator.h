@@ -14,6 +14,7 @@ public:
     void calculate();
 private:
     void getVertices();
+    void createTetrahedron();
 };
 
 #endif
