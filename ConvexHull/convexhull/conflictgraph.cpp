@@ -9,7 +9,7 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
     this->dcel = dcelP;
     this->vertexVec = vertexVecP;
 
-    Eigen::MatrixXd matrix(4,4);
+    Eigen::Matrix4d matrix;
 
     //check the visibility of each face from each point
     for(unsigned int i=4; i<vertexVec.size(); i++){
@@ -30,15 +30,14 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
             matrix(3, 1) = vertexVec[i]->getCoordinate().y();
             matrix(3, 2) = vertexVec[i]->getCoordinate().z();
             matrix(3, 3) = 1;
-            
+
             double det = matrix.determinant();
             
             //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
             //la normale punta all'esterno, quindi il punto "vede" la faccia
             if(det > std::numeric_limits<double>::epsilon()){
                 addToFaceMap(*fit, vertexVec[i]);
-
-                //fai la stessa cosa per i vertici
+                addToPointMap(vertexVec[i], *fit);
             }
             
             
@@ -55,3 +54,9 @@ void ConflictGraph::addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd){
     faceMap[face] = associatedVertexList;
 }
 
+void ConflictGraph::addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd){
+    std::list<Dcel::Face*> associatedFaceList = pointMap[vertex];
+
+    associatedFaceList.push_front(faceToAdd); // minca tua a sa roda
+    pointMap[vertex] = associatedFaceList;
+}

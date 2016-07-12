@@ -7,6 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstdlib>
+#include "conflictgraph.h"
 
 class ConvexHullCreator {
     std::vector<Dcel::Vertex*> vertexVec;

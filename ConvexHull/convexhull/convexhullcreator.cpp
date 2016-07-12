@@ -19,6 +19,8 @@ void ConvexHullCreator::calculate(){
     
     //create the inital tetrahedron
     createTetrahedron();
+
+    ConflictGraph conflictGraph(dcel, vertexVec);
 }
 
 /**
@@ -36,7 +38,7 @@ void ConvexHullCreator::findValidPermutation(){
         std::random_shuffle(this->vertexVec.begin(), this->vertexVec.end());
         
         //check if the first point are coplanar
-        Eigen::MatrixXd matrix(4,4);
+        Eigen::Matrix4d matrix;
         for(int i=0; i<4; i++){
             matrix(i, 0) = this->vertexVec[i]->getCoordinate().x();
             matrix(i, 1) = this->vertexVec[i]->getCoordinate().y();

@@ -16,6 +16,7 @@ public:
     ConflictGraph(DrawableDcel* dcel, std::vector<Dcel::Vertex*> &vertexVec);
 private:
     void addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd);
+    void addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd);
 };
 
 #endif // CONFLICTGRAPH_H
