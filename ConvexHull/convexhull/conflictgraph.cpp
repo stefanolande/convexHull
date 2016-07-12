@@ -24,6 +24,7 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
                 matrix(j, 1) = v->getCoordinate().y();
                 matrix(j, 2) = v->getCoordinate().z();
                 matrix(j, 3) = 1;
+                j++;
             }
             
             matrix(3, 0) = vertexVec[i]->getCoordinate().x();
@@ -33,8 +34,6 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
 
             double det = matrix.determinant();
 
-            std::cout << det << std::endl;
-            
             //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
             //la normale punta all'esterno, quindi il punto "vede" la faccia
             if(det > std::numeric_limits<double>::epsilon()){
