@@ -32,6 +32,8 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
             matrix(3, 3) = 1;
 
             double det = matrix.determinant();
+
+            std::cout << det << std::endl;
             
             //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
             //la normale punta all'esterno, quindi il punto "vede" la faccia
@@ -47,6 +49,18 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
 
 }
 
+std::list<Dcel::Face *> ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
+{
+    return pointMap[vertex];
+}
+
+std::list<Dcel::Vertex *> ConflictGraph::getVisibleVertices(Dcel::Face *face)
+{
+    return faceMap[face];
+}
+
+
+
 void ConflictGraph::addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd){
     std::list<Dcel::Vertex*> associatedVertexList = faceMap[face];
 
@@ -57,6 +71,7 @@ void ConflictGraph::addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd){
 void ConflictGraph::addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd){
     std::list<Dcel::Face*> associatedFaceList = pointMap[vertex];
 
-    associatedFaceList.push_front(faceToAdd); // minca tua a sa roda
+    associatedFaceList.push_front(faceToAdd);
     pointMap[vertex] = associatedFaceList;
 }
+

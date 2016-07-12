@@ -92,7 +92,7 @@ void ConvexHullManager::on_convexHullPushButton_clicked() {
              * However, when you are submitting the project, this line must be decommented.
              * In other words: your convex hull must have all the twin fields setted properly.
              *****/
-            dcel->updateVertexNormals();
+            //dcel->updateVertexNormals();
 
             //Final operations to render the final dcel
 
