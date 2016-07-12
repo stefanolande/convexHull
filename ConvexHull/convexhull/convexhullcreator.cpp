@@ -37,22 +37,22 @@ void ConvexHullCreator::calculate(){
 
             for(std::list<Dcel::Face*>::iterator fit = visibleFaces.begin(); fit != visibleFaces.end(); ++fit){
                 //delete all the faces in F_conflict(p_r) from DCEL
-                Dcel::Face* faceToRemove = *fit;                
+                Dcel::Face* faceToRemove = *fit;
+                dcel->deleteFace(faceToRemove);
 
                 //remove all the half edges of the face
                 for(Dcel::Face::IncidentHalfEdgeIterator iheit = faceToRemove->incidentHalfEdgeBegin(); iheit != faceToRemove->incidentHalfEdgeEnd(); ++iheit){
                     Dcel::HalfEdge* heToRemove = *iheit;
 
                     //unset the twin field of the twin
-                    heToRemove->getTwin()->setTwin(nullptr);
+                    if(heToRemove->getTwin() != nullptr){
+                        heToRemove->getTwin()->setTwin(nullptr);
+                    }
 
                     //remove the he
                     dcel->deleteHalfEdge(heToRemove);
                 }
-                dcel->deleteFace(faceToRemove);
             }
-
-            break;
         }
 
     }
