@@ -24,18 +24,18 @@ void ConvexHullCreator::calculate(){
     ConflictGraph conflictGraph(dcel, vertexVec);
 
     //start the incremental cycle
-   for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
+    for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
 
         //insert p_r in the DCEL
         Dcel::Vertex* newVertex = dcel->addVertex(**it);
 
         std::set<Dcel::Face*> visibleFaces = conflictGraph.getVisibleFaces(*it);
 
+        std::list<Dcel::HalfEdge*> horizon;
+
         //if F_conflict(p_r) is not empty
         if(visibleFaces.size() > 0){
             std::cout << "Facce visibili: " << visibleFaces.size() << std::endl;
-
-            std::list<Dcel::HalfEdge*> horizon;
 
             for(std::set<Dcel::Face*>::iterator fit = visibleFaces.begin(); fit != visibleFaces.end(); ++fit){
                 //delete all the faces in F_conflict(p_r) from DCEL
@@ -52,21 +52,32 @@ void ConvexHullCreator::calculate(){
                         }
 
                         //unset the twin field of the twin
-                        //heToRemove->getTwin()->setTwin(nullptr);
+                        heToRemove->getTwin()->setTwin(nullptr);
                     }
 
                     //remove the he
-                    //dcel->deleteHalfEdge(heToRemove);
+                    dcel->deleteHalfEdge(heToRemove);
                 }
 
                 dcel->deleteFace(faceToRemove);
             }
 
             std::cout << "#HE on horizon " << horizon.size() << std::endl;
-        }        
+
+            //add a new face from each vertex in the horizon to the new edge
+            /*for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
+                Dcel::HalfEdge* halfEdge = *it;
+                addFace(newVertex, halfEdge);
+            }*/
+            break;
+        }
+
+
+
     }
 
-   std::cout << "#FACES " << dcel->getNumberFaces() << std::endl;
+
+    std::cout << "#FACES " << dcel->getNumberFaces() << std::endl;
 
 
 }
@@ -79,7 +90,7 @@ void ConvexHullCreator::findValidPermutation(){
     //get a random permutation that starts with 4 non coplanar vertices
     bool coplanar = true;
     
-    std::srand(std::time(0));
+    //std::srand(std::time(0));
     
     do{
         //calculate a random permutation of the vertices vector
@@ -195,14 +206,14 @@ void ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* exist
 void ConvexHullCreator::adjustTwin(Dcel::HalfEdge* he){
     Dcel::Vertex* startVertex = he->getFromVertex();
     Dcel::Vertex* endVertex = he->getToVertex();
+
     
     //Iterate on the outgoing half edge of the end vertex of the input half edge
-    Dcel::Vertex::OutgoingHalfEdgeIterator heit;
-    for(heit = endVertex->outgoingHalfEdgeBegin(); heit != endVertex->outgoingHalfEdgeEnd(); ++heit){
+    for (Dcel::HalfEdgeIterator heit = dcel->halfEdgeBegin(); heit != dcel->halfEdgeEnd(); ++heit){
         Dcel::HalfEdge* candidateTwin = *heit;
         
         //if an half edge has the end vertex equal to the start vertex of the input half egde it's his twin
-        if(candidateTwin->getToVertex() == startVertex){
+        if(candidateTwin->getToVertex() == startVertex && candidateTwin->getFromVertex() == endVertex){
             candidateTwin->setTwin(he);
             he->setTwin(candidateTwin);
             
