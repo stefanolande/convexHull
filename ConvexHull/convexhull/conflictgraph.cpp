@@ -38,7 +38,7 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
 
             //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
             //la normale punta all'esterno, quindi il punto "vede" la faccia
-            if(det > std::numeric_limits<double>::epsilon()){
+            if(det < -std::numeric_limits<double>::epsilon()){
                 addToFaceMap(*fit, vertexVec[i]);
                 addToPointMap(vertexVec[i], *fit);
                 counter++;

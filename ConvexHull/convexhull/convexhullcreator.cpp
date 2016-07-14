@@ -65,10 +65,10 @@ void ConvexHullCreator::calculate(){
             std::cout << "#HE on horizon " << horizon.size() << std::endl;
 
             //add a new face from each vertex in the horizon to the new edge
-            /*for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
+            for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
                 Dcel::HalfEdge* halfEdge = *it;
                 addFace(newVertex, halfEdge);
-            }*/
+            }
             break;
         }
 
@@ -157,7 +157,7 @@ void ConvexHullCreator::createTetrahedron(){
     addFace(d, he2In);
     addFace(d, he3In);
 
-    checkSanity();
+    //checkSanity();
     
 }
 
@@ -180,6 +180,7 @@ void ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* exist
     he1->setNext(he2);
     he1->setPrev(he3);
     he1->setTwin(existingHe);
+    existingHe->setTwin(he1);
     
     he2->setFromVertex(startVertex);
     he2->setToVertex(otherVertex);
@@ -218,7 +219,6 @@ void ConvexHullCreator::adjustTwin(Dcel::HalfEdge* he){
         if(candidateTwin->getToVertex() == startVertex && candidateTwin->getFromVertex() == endVertex){
             candidateTwin->setTwin(he);
             he->setTwin(candidateTwin);
-            candidateTwin->setTwin(he);
             
             //I've found the twin, no need to keep iterating
             break;
@@ -244,7 +244,7 @@ void ConvexHullCreator::checkSanity(){
         Dcel::HalfEdge* he = *heit;
 
         if(he->getTwin() == nullptr){
-            std::cout << "SBAGLIATO" << std::endl;
+            std::cout << "TWIN NULLO SU FACCIA " << he->getFace()->getId() << std::endl;
         }
     }
 }
