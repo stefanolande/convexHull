@@ -29,15 +29,15 @@ void ConvexHullCreator::calculate(){
         //insert p_r in the DCEL
         Dcel::Vertex* newVertex = dcel->addVertex(**it);
 
-        std::set<Dcel::Face*> visibleFaces = conflictGraph.getVisibleFaces(*it);
+        std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(*it);
 
         std::list<Dcel::HalfEdge*> horizon;
 
         //if F_conflict(p_r) is not empty
-        if(visibleFaces.size() > 0){
-            std::cout << "Facce visibili: " << visibleFaces.size() << std::endl;
+        if(visibleFaces->size() > 0){
+            std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
-            for(std::set<Dcel::Face*>::iterator fit = visibleFaces.begin(); fit != visibleFaces.end(); ++fit){
+            for(std::set<Dcel::Face*>::iterator fit = visibleFaces->begin(); fit != visibleFaces->end(); ++fit){
                 //delete all the faces in F_conflict(p_r) from DCEL
                 Dcel::Face* faceToRemove = *fit;
 
@@ -47,7 +47,7 @@ void ConvexHullCreator::calculate(){
 
                     if(heToRemove->getTwin() != nullptr){
                         //if the twin of an he has the incident face outside the visible faces, it is part of the horizon
-                        if(visibleFaces.count(heToRemove->getTwin()->getFace()) == 0){
+                        if(visibleFaces->count(heToRemove->getTwin()->getFace()) == 0){
                             horizon.push_front(heToRemove->getTwin());
                         }
 
@@ -156,6 +156,8 @@ void ConvexHullCreator::createTetrahedron(){
     addFace(d, he1In);
     addFace(d, he2In);
     addFace(d, he3In);
+
+    checkSanity();
     
 }
 
@@ -216,6 +218,7 @@ void ConvexHullCreator::adjustTwin(Dcel::HalfEdge* he){
         if(candidateTwin->getToVertex() == startVertex && candidateTwin->getFromVertex() == endVertex){
             candidateTwin->setTwin(he);
             he->setTwin(candidateTwin);
+            candidateTwin->setTwin(he);
             
             //I've found the twin, no need to keep iterating
             break;
@@ -233,5 +236,15 @@ void ConvexHullCreator::getVertices(){
     for(vit = dcel->vertexBegin(); vit != dcel->vertexEnd(); ++vit){
         this->vertexVec[i] = *vit;
         i++;
+    }
+}
+
+void ConvexHullCreator::checkSanity(){
+    for (Dcel::HalfEdgeIterator heit = dcel->halfEdgeBegin(); heit != dcel->halfEdgeEnd(); ++heit){
+        Dcel::HalfEdge* he = *heit;
+
+        if(he->getTwin() == nullptr){
+            std::cout << "SBAGLIATO" << std::endl;
+        }
     }
 }

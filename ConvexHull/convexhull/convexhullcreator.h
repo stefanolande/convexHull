@@ -21,6 +21,7 @@ private:
     void createTetrahedron();
     void addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
     void adjustTwin(Dcel::HalfEdge* he);
+    void checkSanity();
 };
 
 #endif

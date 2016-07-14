@@ -51,29 +51,45 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
 
 }
 
-std::set<Dcel::Face *> ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
+std::set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
 {
-    return pointMap[vertex];
+    if(pointMap[vertex] != nullptr){
+        return pointMap[vertex];
+    } else {
+        return new std::set<Dcel::Face *>();
+    }
 }
 
-std::set<Dcel::Vertex *> ConflictGraph::getVisibleVertices(Dcel::Face *face)
+std::set<Dcel::Vertex *>* ConflictGraph::getVisibleVertices(Dcel::Face *face)
 {
-    return faceMap[face];
+    if(faceMap[face] != nullptr){
+        return faceMap[face];
+    } else {
+        return new std::set<Dcel::Vertex *>();
+    }
 }
 
 
 
 void ConflictGraph::addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd){
-    std::set<Dcel::Vertex*> associatedVertexSet = faceMap[face];
+    std::set<Dcel::Vertex*>* associatedVertexSet = faceMap[face];
 
-    associatedVertexSet.insert(vertexToAdd);
-    faceMap[face] = associatedVertexSet;
+    if(associatedVertexSet == nullptr){
+        associatedVertexSet = new std::set<Dcel::Vertex*>();
+        faceMap[face] = associatedVertexSet;
+    }
+
+    associatedVertexSet->insert(vertexToAdd);
 }
 
 void ConflictGraph::addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd){
-    std::set<Dcel::Face*> associatedFaceSet = pointMap[vertex];
+    std::set<Dcel::Face*>* associatedFaceSet = pointMap[vertex];
 
-    associatedFaceSet.insert(faceToAdd);
-    pointMap[vertex] = associatedFaceSet;
+    if(associatedFaceSet == nullptr){
+        associatedFaceSet = new std::set<Dcel::Face*>();
+        pointMap[vertex] = associatedFaceSet;
+    }
+
+    associatedFaceSet->insert(faceToAdd);
 }
 
