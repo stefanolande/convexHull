@@ -11,6 +11,8 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
 
     Eigen::Matrix4d matrix;
 
+    int counter = 0;
+
     //check the visibility of each face from each point
     for(unsigned int i=4; i<vertexVec.size(); i++){
 
@@ -39,21 +41,22 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
             if(det > std::numeric_limits<double>::epsilon()){
                 addToFaceMap(*fit, vertexVec[i]);
                 addToPointMap(vertexVec[i], *fit);
+                counter++;
             }
             
             
         }
     }
-
+    std::cout << "Vertici fuori dal tetraedro " << counter << std::endl;
 
 }
 
-std::list<Dcel::Face *> ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
+std::set<Dcel::Face *> ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
 {
     return pointMap[vertex];
 }
 
-std::list<Dcel::Vertex *> ConflictGraph::getVisibleVertices(Dcel::Face *face)
+std::set<Dcel::Vertex *> ConflictGraph::getVisibleVertices(Dcel::Face *face)
 {
     return faceMap[face];
 }
@@ -61,16 +64,16 @@ std::list<Dcel::Vertex *> ConflictGraph::getVisibleVertices(Dcel::Face *face)
 
 
 void ConflictGraph::addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd){
-    std::list<Dcel::Vertex*> associatedVertexList = faceMap[face];
+    std::set<Dcel::Vertex*> associatedVertexSet = faceMap[face];
 
-    associatedVertexList.push_front(vertexToAdd);
-    faceMap[face] = associatedVertexList;
+    associatedVertexSet.insert(vertexToAdd);
+    faceMap[face] = associatedVertexSet;
 }
 
 void ConflictGraph::addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd){
-    std::list<Dcel::Face*> associatedFaceList = pointMap[vertex];
+    std::set<Dcel::Face*> associatedFaceSet = pointMap[vertex];
 
-    associatedFaceList.push_front(faceToAdd);
-    pointMap[vertex] = associatedFaceList;
+    associatedFaceSet.insert(faceToAdd);
+    pointMap[vertex] = associatedFaceSet;
 }
 
