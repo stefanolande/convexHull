@@ -9,46 +9,19 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
     this->dcel = dcelP;
     this->vertexVec = vertexVecP;
 
-    Eigen::Matrix4d matrix;
-
-    int counter = 0;
-
     //check the visibility of each face from each point
     for(unsigned int i=4; i<vertexVec.size(); i++){
 
         for(Dcel::FaceIterator fit = dcel->faceBegin(); fit != dcel->faceEnd(); ++fit){
 
-            //add the coordinates of the three vertices to the matrix
-            int j=0;
-            for(Dcel::Face::IncidentVertexIterator vit = (*fit)->incidentVertexBegin(); vit != (*fit)->incidentVertexEnd(); ++vit){
-                Dcel::Vertex* v = *vit;
-                matrix(j, 0) = v->getCoordinate().x();
-                matrix(j, 1) = v->getCoordinate().y();
-                matrix(j, 2) = v->getCoordinate().z();
-                matrix(j, 3) = 1;
-                j++;
-            }
-            
-            matrix(3, 0) = vertexVec[i]->getCoordinate().x();
-            matrix(3, 1) = vertexVec[i]->getCoordinate().y();
-            matrix(3, 2) = vertexVec[i]->getCoordinate().z();
-            matrix(3, 3) = 1;
-
-            double det = matrix.determinant();
-
-            //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
-            //la normale punta all'esterno, quindi il punto "vede" la faccia
-            if(det < -std::numeric_limits<double>::epsilon()){
+            if(checkVisibility(*fit, vertexVec[i])){
                 addToFaceMap(*fit, vertexVec[i]);
                 addToPointMap(vertexVec[i], *fit);
-                counter++;
             }
             
             
         }
     }
-    std::cout << "Vertici fuori dal tetraedro " << counter << std::endl;
-
 }
 
 std::set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
@@ -91,5 +64,30 @@ void ConflictGraph::addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd){
     }
 
     associatedFaceSet->insert(faceToAdd);
+}
+
+bool ConflictGraph::checkVisibility(Dcel::Face* face, Dcel::Vertex* vertex){
+    Eigen::Matrix4d matrix;
+    //add the coordinates of the three vertices to the matrix
+    int j=0;
+    for(Dcel::Face::IncidentVertexIterator vit = face->incidentVertexBegin(); vit != face->incidentVertexEnd(); ++vit){
+        Dcel::Vertex* v = *vit;
+        matrix(j, 0) = v->getCoordinate().x();
+        matrix(j, 1) = v->getCoordinate().y();
+        matrix(j, 2) = v->getCoordinate().z();
+        matrix(j, 3) = 1;
+        j++;
+    }
+
+    matrix(3, 0) = vertex->getCoordinate().x();
+    matrix(3, 1) = vertex->getCoordinate().y();
+    matrix(3, 2) = vertex->getCoordinate().z();
+    matrix(3, 3) = 1;
+
+    double det = matrix.determinant();
+
+    //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
+    //la normale punta all'esterno, quindi il punto "vede" la faccia
+    return (det > std::numeric_limits<double>::epsilon());
 }
 

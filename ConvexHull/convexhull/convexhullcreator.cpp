@@ -32,6 +32,8 @@ void ConvexHullCreator::calculate(){
         std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(*it);
 
         std::list<Dcel::HalfEdge*> horizon;
+        std::set<Dcel::Vertex*> candidateVisibleVertices, candidateVisibleVertices2;
+        std::map<Dcel::HalfEdge*, std::set<Dcel::Vertex*>*> candidateVisibleVerticesMap;
 
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
@@ -49,6 +51,11 @@ void ConvexHullCreator::calculate(){
                         //if the twin of an he has the incident face outside the visible faces, it is part of the horizon
                         if(visibleFaces->count(heToRemove->getTwin()->getFace()) == 0){
                             horizon.push_front(heToRemove->getTwin());
+
+                            candidateVisibleVertices = *conflictGraph.getVisibleVertices(heToRemove->getFace());
+                            candidateVisibleVertices2 = *conflictGraph.getVisibleVertices(heToRemove->getTwin()->getFace());
+                            candidateVisibleVertices.insert(candidateVisibleVertices2.begin(), candidateVisibleVertices2.end());
+                            //candidateVisibleVerticesMap[heToRemove->getTwin()] = &candidateVisibleVertices;
                         }
 
                         //unset the twin field of the twin
@@ -57,14 +64,16 @@ void ConvexHullCreator::calculate(){
 
                     //remove the he
                     dcel->deleteHalfEdge(heToRemove);
+                    //heToRemoveList.push_front(heToRemove);
                 }
 
                 dcel->deleteFace(faceToRemove);
+                //faceToRemoveList.push_front(faceToRemove);
             }
 
             std::cout << "#HE on horizon " << horizon.size() << std::endl;
 
-            //add a new face from each vertex in the horizon to the new edge
+           //add a new face from each vertex in the horizon to the new edge
             for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
                 Dcel::HalfEdge* halfEdge = *it;
                 addFace(newVertex, halfEdge);

@@ -16,6 +16,7 @@ public:
     ConflictGraph(DrawableDcel* dcel, std::vector<Dcel::Vertex*> &vertexVec);
     std::set<Dcel::Face*>* getVisibleFaces(Dcel::Vertex* vertex);
     std::set<Dcel::Vertex *>* getVisibleVertices(Dcel::Face* face);
+    bool checkVisibility(Dcel::Face* face, Dcel::Vertex* vertex);
 private:
     void addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd);
     void addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd);
