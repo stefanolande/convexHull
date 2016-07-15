@@ -72,7 +72,7 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, Dcel::Vertex* vertex){
     int j=0;
     for(Dcel::Face::IncidentVertexIterator vit = face->incidentVertexBegin(); vit != face->incidentVertexEnd(); ++vit){
         Dcel::Vertex* v = *vit;
-        matrix(j, 0) = v->getCoordinate().x();
+        matrix(j, 0) = (*vit)->getCoordinate().x();
         matrix(j, 1) = v->getCoordinate().y();
         matrix(j, 2) = v->getCoordinate().z();
         matrix(j, 3) = 1;
@@ -89,5 +89,42 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, Dcel::Vertex* vertex){
     //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
     //la normale punta all'esterno, quindi il punto "vede" la faccia
     return (det > std::numeric_limits<double>::epsilon());
+}
+
+void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::set<Dcel::Vertex*> *candidateVertices)
+{
+    int count=0;
+    for(std::set<Dcel::Vertex*>::iterator it = candidateVertices->begin(); it != candidateVertices->end(); ++it){
+        if(checkVisibility(face, *it)){
+            addToFaceMap(face, *it);
+            addToPointMap(*it, face);
+            count++;
+        }
+    }
+    std::cout << "Added " << count << " links" << std::endl;
+}
+
+void ConflictGraph::deleteFaces(std::set<Dcel::Face *> *faces)
+{
+    for(std::set<Dcel::Face *>::iterator it = faces->begin(); it != faces->end(); ++it){
+        this->faceMap.erase(*it);
+
+        for(std::map<Dcel::Vertex*, std::set<Dcel::Face*>*>::iterator pit = pointMap.begin(); pit != pointMap.end(); ++pit){
+            if(pit->second != nullptr){
+                pit->second->erase(*it);
+            }
+        }
+    }
+}
+
+void ConflictGraph::deletePoint(Dcel::Vertex *vertex)
+{
+    pointMap.erase(vertex);
+
+    for(std::map<Dcel::Face*, std::set<Dcel::Vertex*>*>::iterator fit = faceMap.begin(); fit != faceMap.end(); ++fit){
+        if(fit->second != nullptr){
+            fit->second->erase(vertex);
+        }
+    }
 }
 

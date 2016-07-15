@@ -24,12 +24,14 @@ void ConvexHullCreator::calculate(){
     ConflictGraph conflictGraph(dcel, vertexVec);
 
     //start the incremental cycle
-    for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
-
+    //for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
+    for(unsigned int i=4; i<533;i++){
         //insert p_r in the DCEL
-        Dcel::Vertex* newVertex = dcel->addVertex(**it);
+        //Dcel::Vertex* newVertex = dcel->addVertex(**it);
+        Dcel::Vertex* newVertex = dcel->addVertex(*vertexVec[i]);
 
-        std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(*it);
+        //std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(*it);
+        std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(vertexVec[i]);
 
         std::list<Dcel::HalfEdge*> horizon;
         std::set<Dcel::Vertex*> candidateVisibleVertices, candidateVisibleVertices2;
@@ -55,7 +57,7 @@ void ConvexHullCreator::calculate(){
                             candidateVisibleVertices = *conflictGraph.getVisibleVertices(heToRemove->getFace());
                             candidateVisibleVertices2 = *conflictGraph.getVisibleVertices(heToRemove->getTwin()->getFace());
                             candidateVisibleVertices.insert(candidateVisibleVertices2.begin(), candidateVisibleVertices2.end());
-                            //candidateVisibleVerticesMap[heToRemove->getTwin()] = &candidateVisibleVertices;
+                            candidateVisibleVerticesMap[heToRemove->getTwin()] = &candidateVisibleVertices;
                         }
 
                         //unset the twin field of the twin
@@ -76,12 +78,14 @@ void ConvexHullCreator::calculate(){
            //add a new face from each vertex in the horizon to the new edge
             for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
                 Dcel::HalfEdge* halfEdge = *it;
-                addFace(newVertex, halfEdge);
+                Dcel::Face* newFace = addFace(newVertex, halfEdge);
+
+                conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
             }
-            break;
         }
 
-
+        conflictGraph.deleteFaces(visibleFaces);
+        conflictGraph.deletePoint(newVertex);
 
     }
 
@@ -176,7 +180,7 @@ void ConvexHullCreator::createTetrahedron(){
  * @param otherVertex
  * @param existingHe
  */
-void ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
+Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
     Dcel::HalfEdge* he1 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he3 = this->dcel->addHalfEdge();
@@ -208,6 +212,8 @@ void ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* exist
     he1->setFace(face);
     he2->setFace(face);
     he3->setFace(face);
+
+    return face;
 }
 
 /**
@@ -243,7 +249,7 @@ void ConvexHullCreator::getVertices(){
     Dcel::VertexIterator vit;
     int i=0;
     for(vit = dcel->vertexBegin(); vit != dcel->vertexEnd(); ++vit){
-        this->vertexVec[i] = *vit;
+        this->vertexVec[i] = new Dcel::Vertex(**vit);
         i++;
     }
 }

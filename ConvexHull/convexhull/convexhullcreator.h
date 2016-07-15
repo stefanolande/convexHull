@@ -19,7 +19,7 @@ private:
     void getVertices();
     void findValidPermutation();
     void createTetrahedron();
-    void addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
+    Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
     void adjustTwin(Dcel::HalfEdge* he);
     void checkSanity();
 };
