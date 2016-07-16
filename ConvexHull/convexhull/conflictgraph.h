@@ -12,6 +12,8 @@ class ConflictGraph
     std::vector<Dcel::Vertex*> vertexVec;
     std::map<Dcel::Vertex*, std::set<Dcel::Face*>*> pointMap;
     std::map<Dcel::Face*, std::set<Dcel::Vertex*>*> faceMap;
+
+    std::set<std::pair<Dcel::Vertex*, Dcel::Face*>> conflict;
 public:
     ConflictGraph(DrawableDcel* dcel, std::vector<Dcel::Vertex*> &vertexVec);
     std::set<Dcel::Face*>* getVisibleFaces(Dcel::Vertex* vertex);

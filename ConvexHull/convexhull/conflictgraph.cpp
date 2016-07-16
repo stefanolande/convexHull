@@ -15,8 +15,10 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
         for(Dcel::FaceIterator fit = dcel->faceBegin(); fit != dcel->faceEnd(); ++fit){
 
             if(checkVisibility(*fit, vertexVec[i])){
-                addToFaceMap(*fit, vertexVec[i]);
-                addToPointMap(vertexVec[i], *fit);
+                //addToFaceMap(*fit, vertexVec[i]);
+                //addToPointMap(vertexVec[i], *fit);
+
+                this->conflict.insert(std::make_pair(vertexVec[i], *fit));
             }
             
             
@@ -26,20 +28,40 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Dcel::Vertex*> &ve
 
 std::set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Dcel::Vertex *vertex)
 {
-    if(pointMap[vertex] != nullptr){
+    std::set<Dcel::Face *>* result = new std::set<Dcel::Face *>();
+
+    for(std::set<std::pair<Dcel::Vertex*, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
+        if(vertex == (*it).first){
+            result->insert((*it).second);
+        }
+    }
+
+    return result;
+
+    /*if(pointMap[vertex] != nullptr){
         return pointMap[vertex];
     } else {
         return new std::set<Dcel::Face *>();
-    }
+    }*/
 }
 
 std::set<Dcel::Vertex *>* ConflictGraph::getVisibleVertices(Dcel::Face *face)
 {
-    if(faceMap[face] != nullptr){
+    std::set<Dcel::Vertex *>* result = new std::set<Dcel::Vertex *>();
+
+    for(std::set<std::pair<Dcel::Vertex*, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
+        if(face == (*it).second){
+            result->insert((*it).first);
+        }
+    }
+
+    return result;
+
+    /*if(faceMap[face] != nullptr){
         return faceMap[face];
     } else {
         return new std::set<Dcel::Vertex *>();
-    }
+    }*/
 }
 
 
@@ -88,42 +110,48 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, Dcel::Vertex* vertex){
 
     //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
     //la normale punta all'esterno, quindi il punto "vede" la faccia
-    return (det > std::numeric_limits<double>::epsilon());
+    return (det < -std::numeric_limits<double>::epsilon());
 }
 
 void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::set<Dcel::Vertex*> *candidateVertices)
 {
-    int count=0;
+    //int count=0;
     for(std::set<Dcel::Vertex*>::iterator it = candidateVertices->begin(); it != candidateVertices->end(); ++it){
         if(checkVisibility(face, *it)){
-            addToFaceMap(face, *it);
-            addToPointMap(*it, face);
-            count++;
+            //addToFaceMap(face, *it);
+            //addToPointMap(*it, face);
+            //count++;
+            this->conflict.insert(std::make_pair(*it, face));
         }
     }
-    std::cout << "Added " << count << " links" << std::endl;
+    //std::cout << "Added " << count << " links" << std::endl;
 }
 
 void ConflictGraph::deleteFaces(std::set<Dcel::Face *> *faces)
 {
     for(std::set<Dcel::Face *>::iterator it = faces->begin(); it != faces->end(); ++it){
-        this->faceMap.erase(*it);
+
+        for(std::set<std::pair<Dcel::Vertex*, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end(); ++cit){
+            if((*cit).second == *it){
+                this->conflict.erase(cit);
+            }
+        }
+
+        /*this->faceMap.erase(*it);
 
         for(std::map<Dcel::Vertex*, std::set<Dcel::Face*>*>::iterator pit = pointMap.begin(); pit != pointMap.end(); ++pit){
             if(pit->second != nullptr){
                 pit->second->erase(*it);
             }
-        }
+        }*/
     }
 }
 
 void ConflictGraph::deletePoint(Dcel::Vertex *vertex)
 {
-    pointMap.erase(vertex);
-
-    for(std::map<Dcel::Face*, std::set<Dcel::Vertex*>*>::iterator fit = faceMap.begin(); fit != faceMap.end(); ++fit){
-        if(fit->second != nullptr){
-            fit->second->erase(vertex);
+    for(std::set<std::pair<Dcel::Vertex*, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end(); ++cit){
+        if((*cit).first == vertex){
+            this->conflict.erase(cit);
         }
     }
 }

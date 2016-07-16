@@ -22,6 +22,7 @@ private:
     Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
     void adjustTwin(Dcel::HalfEdge* he);
     void checkSanity();
+    void removeHalfEdgeList(std::list<Dcel::HalfEdge*> &heList);
 };
 
 #endif
