@@ -127,6 +127,18 @@ void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::set<Dcel::Vertex*
     //std::cout << "Added " << count << " links" << std::endl;
 }
 
+void ConflictGraph::updateNaive(Dcel::Face* face){
+    for(Dcel::VertexIterator it = dcel->vertexBegin(); it != dcel->vertexEnd(); ++it){
+        if(checkVisibility(face, *it)){
+            //addToFaceMap(face, *it);
+            //addToPointMap(*it, face);
+            //count++;
+            this->conflict.insert(std::make_pair(*it, face));
+        }
+    }
+
+}
+
 void ConflictGraph::deleteFaces(std::set<Dcel::Face *> *faces)
 {
     for(std::set<Dcel::Face *>::iterator it = faces->begin(); it != faces->end(); ++it){

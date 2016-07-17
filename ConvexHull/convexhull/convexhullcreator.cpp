@@ -45,9 +45,9 @@ void ConvexHullCreator::calculate(){
 
             count++;
 
-            checkSanity();
+            //checkSanity();
 
-            //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
+            std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
             std::map<Dcel::HalfEdge*, std::set<Dcel::Vertex*>*> candidateVisibleVerticesMap;
 
@@ -78,7 +78,8 @@ void ConvexHullCreator::calculate(){
                         //heToRemove->getTwin()->setTwin(nullptr);
                     } else {
                         std::cout << "TWIN NULLO SU FACCIA " << heToRemove->getFace()->getId() << std::endl;
-                    }
+
+                    }                    
 
 
                     //remove the he
@@ -98,7 +99,9 @@ void ConvexHullCreator::calculate(){
                 Dcel::HalfEdge* halfEdge = *it;
                 Dcel::Face* newFace = addFace(newVertex, halfEdge);
 
-                conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
+                //conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
+                //conflictGraph.updateNaive(newFace);
+                conflictGraph = ConflictGraph(dcel, vertexVec);
                 dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.01, QColor(255,0,0));
             }
         }
@@ -108,7 +111,7 @@ void ConvexHullCreator::calculate(){
 
         dcel->addDebugSphere(newVertex->getCoordinate(), 0.01, QColor(255,0,0));
 
-        if(count == 33){
+        if(count == 16){
             return;
         }
 
@@ -240,7 +243,7 @@ Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge
     he2->setFace(face);
     he3->setFace(face);
 
-    std::cout << "Aggiungo faccia " << face->getId() << std::endl;
+    //std::cout << "Aggiungo faccia " << face->getId() << std::endl;
 
 
     return face;

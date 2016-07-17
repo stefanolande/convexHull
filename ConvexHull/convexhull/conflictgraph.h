@@ -22,6 +22,7 @@ public:
     void updateConflictGraph(Dcel::Face* face, std::set<Dcel::Vertex *> *candidateVertices);
     void deleteFaces(std::set<Dcel::Face*>* faces);
     void deletePoint(Dcel::Vertex *vertex);
+    void updateNaive(Dcel::Face *face);
 private:
     void addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd);
     void addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd);
