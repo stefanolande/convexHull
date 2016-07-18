@@ -128,12 +128,12 @@ void ConflictGraph::updateConflictGraph(Dcel::Face *face, const std::set<Pointd 
 }
 
 void ConflictGraph::updateNaive(Dcel::Face* face){
-    for(std::vector<Pointd>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
-        if(checkVisibility(face, *it)){
+    for(unsigned int i=4; i<vertexVec.size(); i++){
+        if(checkVisibility(face, vertexVec[i])){
             //addToFaceMap(face, *it);
             //addToPointMap(*it, face);
             //count++;
-            this->conflict.insert(std::make_pair(*it, face));
+            this->conflict.insert(std::make_pair(vertexVec[i], face));
         }
     }
 

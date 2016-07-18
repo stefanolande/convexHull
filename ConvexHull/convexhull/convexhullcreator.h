@@ -19,10 +19,13 @@ private:
     void getVertices();
     void findValidPermutation();
     void createTetrahedron();
-    Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
+    Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he, std::list<Dcel::Face *> &otherFaces);
     void adjustTwin(Dcel::HalfEdge* he);
     void checkSanity();
     void removeHalfEdgeList(std::list<Dcel::HalfEdge*> &heList);
+    void adjustTwin1(Dcel::HalfEdge *he, std::list<Dcel::Face *> &faceList);
+    Dcel::Face *addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
+    void removeVisibleFaces(std::list<Dcel::Face*> &faceList, std::list<Dcel::HalfEdge *> &vertexList);
 };
 
 #endif

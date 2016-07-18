@@ -35,6 +35,8 @@ void ConvexHullCreator::calculate(){
         std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(vertexVec[i]);
 
         std::list<Dcel::HalfEdge*> horizon, heToRemoveList;
+        std::list<Dcel::Face*> faceToRemoveList;
+
 
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
@@ -45,7 +47,7 @@ void ConvexHullCreator::calculate(){
 
             count++;
 
-            checkSanity();
+            //checkSanity();
 
             std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
@@ -79,7 +81,7 @@ void ConvexHullCreator::calculate(){
                     } else {
                         std::cout << "TWIN NULLO SU FACCIA " << heToRemove->getFace()->getId() << std::endl;
 
-                    }                    
+                    }
 
 
                     //remove the he
@@ -92,15 +94,18 @@ void ConvexHullCreator::calculate(){
                 //faceToRemoveList.push_front(faceToRemove);
             }
 
+            //removeVisibleFaces(faceToRemoveList, heToRemoveList);
+
             //std::cout << "#HE on horizon " << horizon.size() << std::endl;
 
-           //add a new face from each vertex in the horizon to the new edge
+            //add a new face from each vertex in the horizon to the new edge
+            std::list<Dcel::Face*> newFaces;
             for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
                 Dcel::HalfEdge* halfEdge = *it;
-                Dcel::Face* newFace = addFace(newVertex, halfEdge);
+                Dcel::Face* newFace = addFace(newVertex, halfEdge, newFaces);
 
                 //conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
-                //conflictGraph.updateNaive(newFace);
+                conflictGraph.updateNaive(newFace);
                 dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.01, QColor(255,0,0));
             }
         }
@@ -110,11 +115,13 @@ void ConvexHullCreator::calculate(){
 
         dcel->addDebugSphere(vertexVec[i], 0.01, QColor(255,0,0));
 
-        if(count == 50){
+        if(count == 2){
             return;
         }
 
-        conflictGraph = ConflictGraph(dcel, vertexVec);
+        //conflictGraph = ConflictGraph(dcel, vertexVec);
+
+
 
     }
 
@@ -122,6 +129,26 @@ void ConvexHullCreator::calculate(){
     std::cout << "#FACES " << dcel->getNumberFaces() << std::endl;
 
 
+}
+
+void ConvexHullCreator::removeVisibleFaces(std::list<Dcel::Face*> &faceList, std::list<Dcel::HalfEdge*> &heList){
+    for(std::list<Dcel::HalfEdge*>::iterator it = heList.begin(); it != heList.end(); ++it){
+        Dcel::Vertex* start = (*it)->getFromVertex();
+        Dcel::Vertex* end = (*it)->getToVertex();
+
+        this->dcel->deleteHalfEdge(*it);
+
+        if(start->getCardinality() == 0){
+            this->dcel->deleteVertex(start);
+        }
+        if(end->getCardinality() == 0){
+            this->dcel->deleteVertex(end);
+        }
+    }
+
+    for(std::list<Dcel::Face*>::iterator it = faceList.begin(); it != faceList.end(); ++it){
+        this->dcel->deleteFace(*it);
+    }
 }
 
 /**
@@ -197,9 +224,9 @@ void ConvexHullCreator::createTetrahedron(){
 
     std::cout << "Aggiungo faccia " << face1->getId() << std::endl;
     
-    addFace(d, he1In);
-    addFace(d, he2In);
-    addFace(d, he3In);
+    addFaceForTetrahedron(d, he1In);
+    addFaceForTetrahedron(d, he2In);
+    addFaceForTetrahedron(d, he3In);
 
     //checkSanity();
     
@@ -211,7 +238,7 @@ void ConvexHullCreator::createTetrahedron(){
  * @param otherVertex
  * @param existingHe
  */
-Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
+Dcel::Face* ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
     Dcel::HalfEdge* he1 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he3 = this->dcel->addHalfEdge();
@@ -232,12 +259,12 @@ Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge
     he2->setPrev(he1);
 
     //set the twin
-    adjustTwin(he2);
-    /*if(existingHe->getPrev()->getTwin() != nullptr){
-        he2->setTwin(existingHe->getPrev()->getTwin()->getPrev());
-        existingHe->getPrev()->getTwin()->getPrev()->setTwin(he2);
-    }*/
-    
+    if(existingHe->getPrev()->getTwin() != nullptr){
+        Dcel::HalfEdge* twin = existingHe->getPrev()->getTwin()->getPrev();
+        he2->setTwin(twin);
+        twin->setTwin(he2);
+    }
+
 
     he3->setFromVertex(otherVertex);
     he3->setToVertex(endVertex);
@@ -245,11 +272,12 @@ Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge
     he3->setPrev(he2);
 
     //set the twin
-    adjustTwin(he3);
-    /*if(existingHe->getNext()->getTwin() != nullptr){
-        he3->setTwin(existingHe->getNext()->getTwin()->getNext());
-        existingHe->getNext()->getTwin()->getNext()->setTwin(he3);
-    }*/
+    //adjustTwin(he3);
+    if(existingHe->getNext()->getTwin() != nullptr){
+        Dcel::HalfEdge* twin = existingHe->getNext()->getTwin()->getNext();
+        he3->setTwin(twin);
+        twin->setTwin(he3);
+    }
 
     
     Dcel::Face* face = this->dcel->addFace();
@@ -257,6 +285,61 @@ Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge
     he1->setFace(face);
     he2->setFace(face);
     he3->setFace(face);
+
+    //std::cout << "Aggiungo faccia " << face->getId() << std::endl;
+
+
+    return face;
+}
+
+Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe, std::list<Dcel::Face*> &otherFaces){
+    Dcel::HalfEdge* he1 = this->dcel->addHalfEdge();
+    Dcel::HalfEdge* he2 = this->dcel->addHalfEdge();
+    Dcel::HalfEdge* he3 = this->dcel->addHalfEdge();
+
+    Dcel::Vertex* startVertex = existingHe->getFromVertex();
+    Dcel::Vertex* endVertex = existingHe->getToVertex();
+
+    he1->setFromVertex(endVertex);
+    he1->setToVertex(startVertex);
+    he1->setNext(he2);
+    he1->setPrev(he3);
+    he1->setTwin(existingHe);
+    existingHe->setTwin(he1);
+
+    he2->setFromVertex(startVertex);
+    he2->setToVertex(otherVertex);
+    he2->setNext(he3);
+    he2->setPrev(he1);
+
+    he3->setFromVertex(otherVertex);
+    he3->setToVertex(endVertex);
+    he3->setNext(he1);
+    he3->setPrev(he2);
+
+    //set the twins
+    for(std::list<Dcel::Face*>::iterator it = otherFaces.begin(); it != otherFaces.end(); ++it){
+        Dcel::Face* currentFace = *it;
+        for(Dcel::Face::IncidentHalfEdgeIterator iheit =  currentFace->incidentHalfEdgeBegin(); iheit != currentFace->incidentHalfEdgeEnd(); ++iheit){
+            Dcel::HalfEdge* candidateTwin = *iheit;
+
+            if(he2->getFromVertex() == candidateTwin->getToVertex() && he2->getFromVertex() == candidateTwin->getToVertex()){
+                candidateTwin->setTwin(he2);
+                he2->setTwin(candidateTwin);
+
+            } else if (he3->getFromVertex() == candidateTwin->getToVertex() && he3->getFromVertex() == candidateTwin->getToVertex()){
+                candidateTwin->setTwin(he3);
+                he3->setTwin(candidateTwin);
+            }
+        }
+    }
+
+    Dcel::Face* face = this->dcel->addFace();
+    face->setOuterHalfEdge(he1);
+    he1->setFace(face);
+    he2->setFace(face);
+    he3->setFace(face);
+    otherFaces.push_front(face);
 
     //std::cout << "Aggiungo faccia " << face->getId() << std::endl;
 
@@ -290,6 +373,7 @@ void ConvexHullCreator::adjustTwin(Dcel::HalfEdge* he){
         }
     }
 }
+
 
 /**
  * @brief ConvexHullCreator::getVertices
