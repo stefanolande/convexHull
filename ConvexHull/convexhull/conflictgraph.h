@@ -9,23 +9,23 @@
 class ConflictGraph
 {
     DrawableDcel* dcel;
-    std::vector<Dcel::Vertex*> vertexVec;
-    std::map<Dcel::Vertex*, std::set<Dcel::Face*>*> pointMap;
-    std::map<Dcel::Face*, std::set<Dcel::Vertex*>*> faceMap;
+    std::vector<Pointd> vertexVec;
+    //std::map<Dcel::Vertex*, std::set<Dcel::Face*>*> pointMap;
+    //std::map<Dcel::Face*, std::set<Dcel::Vertex*>*> faceMap;
 
-    std::set<std::pair<Dcel::Vertex*, Dcel::Face*>> conflict;
+    std::set<std::pair<Pointd, Dcel::Face*>> conflict;
 public:
-    ConflictGraph(DrawableDcel* dcel, std::vector<Dcel::Vertex*> &vertexVec);
-    std::set<Dcel::Face*>* getVisibleFaces(Dcel::Vertex* vertex);
-    std::set<Dcel::Vertex *>* getVisibleVertices(Dcel::Face* face);
-    bool checkVisibility(Dcel::Face* face, Dcel::Vertex* vertex);
-    void updateConflictGraph(Dcel::Face* face, std::set<Dcel::Vertex *> *candidateVertices);
+    ConflictGraph(DrawableDcel* dcel, const std::vector<Pointd> &vertexVec);
+    std::set<Dcel::Face*>* getVisibleFaces(Pointd &vertex);
+    std::set<Pointd> *getVisibleVertices(Dcel::Face *face);
+    bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
+    void updateConflictGraph(Dcel::Face* face, const std::set<Pointd*> &candidateVertices);
     void deleteFaces(std::set<Dcel::Face*>* faces);
-    void deletePoint(Dcel::Vertex *vertex);
+    void deletePoint(Pointd &vertex);
     void updateNaive(Dcel::Face *face);
 private:
-    void addToFaceMap(Dcel::Face* face, Dcel::Vertex* vertexToAdd);
-    void addToPointMap(Dcel::Vertex* vertex, Dcel::Face* faceToAdd);
+    //void addToFaceMap(Dcel::Face* face, const Pointd &vertexToAdd);
+    //void addToPointMap(const Pointd &vertex, Dcel::Face* faceToAdd);
 };
 
 #endif // CONFLICTGRAPH_H

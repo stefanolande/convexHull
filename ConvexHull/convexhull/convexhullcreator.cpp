@@ -3,7 +3,7 @@
 
 ConvexHullCreator::ConvexHullCreator(DrawableDcel* dcel){
     this->dcel = dcel;
-    this->vertexVec = std::vector<Dcel::Vertex*>(dcel->getNumberVertices());
+    this->vertexVec = std::vector<Pointd>(dcel->getNumberVertices());
 }
 
 
@@ -32,10 +32,6 @@ void ConvexHullCreator::calculate(){
         dcel->clearDebugCylinders();
         dcel->clearDebugSpheres();
 
-        //insert p_r in the DCEL
-        //Dcel::Vertex* newVertex = dcel->addVertex(**it);
-        Dcel::Vertex* newVertex = dcel->addVertex(*vertexVec[i]);
-
         std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(vertexVec[i]);
 
         std::list<Dcel::HalfEdge*> horizon, heToRemoveList;
@@ -43,13 +39,17 @@ void ConvexHullCreator::calculate(){
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
 
+            //insert p_r in the DCEL
+            //Dcel::Vertex* newVertex = dcel->addVertex(**it);
+            Dcel::Vertex* newVertex = dcel->addVertex(vertexVec[i]);
+
             count++;
 
-            //checkSanity();
+            checkSanity();
 
             std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
-            std::map<Dcel::HalfEdge*, std::set<Dcel::Vertex*>*> candidateVisibleVerticesMap;
+            std::map<Dcel::HalfEdge*, std::set<Pointd>*> candidateVisibleVerticesMap;
 
 
             for(std::set<Dcel::Face*>::iterator fit = visibleFaces->begin(); fit != visibleFaces->end(); ++fit){
@@ -60,8 +60,8 @@ void ConvexHullCreator::calculate(){
                 for(Dcel::Face::IncidentHalfEdgeIterator iheit = faceToRemove->incidentHalfEdgeBegin(); iheit != faceToRemove->incidentHalfEdgeEnd(); ++iheit){
                     Dcel::HalfEdge* heToRemove = *iheit;
 
-                    std::set<Dcel::Vertex *>* candidateVisibleVertices;
-                    std::set<Dcel::Vertex *>* candidateVisibleVertices2;
+                    std::set<Pointd>* candidateVisibleVertices;
+                    std::set<Pointd>* candidateVisibleVertices2;
 
                     if(heToRemove->getTwin() != nullptr){
                         //if the twin of an he has the incident face outside the visible faces, it is part of the horizon
@@ -101,19 +101,20 @@ void ConvexHullCreator::calculate(){
 
                 //conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
                 //conflictGraph.updateNaive(newFace);
-                conflictGraph = ConflictGraph(dcel, vertexVec);
                 dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.01, QColor(255,0,0));
             }
         }
 
         conflictGraph.deleteFaces(visibleFaces);
-        conflictGraph.deletePoint(newVertex);
+        conflictGraph.deletePoint(vertexVec[i]);
 
-        dcel->addDebugSphere(newVertex->getCoordinate(), 0.01, QColor(255,0,0));
+        dcel->addDebugSphere(vertexVec[i], 0.01, QColor(255,0,0));
 
-        if(count == 16){
+        if(count == 50){
             return;
         }
+
+        conflictGraph = ConflictGraph(dcel, vertexVec);
 
     }
 
@@ -140,9 +141,9 @@ void ConvexHullCreator::findValidPermutation(){
         //check if the first point are coplanar
         Eigen::Matrix4d matrix;
         for(int i=0; i<4; i++){
-            matrix(i, 0) = this->vertexVec[i]->getCoordinate().x();
-            matrix(i, 1) = this->vertexVec[i]->getCoordinate().y();
-            matrix(i, 2) = this->vertexVec[i]->getCoordinate().z();
+            matrix(i, 0) = this->vertexVec[i].x();
+            matrix(i, 1) = this->vertexVec[i].y();
+            matrix(i, 2) = this->vertexVec[i].z();
             matrix(i, 3) = 1;
         }
         
@@ -164,10 +165,10 @@ void ConvexHullCreator::findValidPermutation(){
  */
 void ConvexHullCreator::createTetrahedron(){
     //add the 4 point
-    Dcel::Vertex* a = this->dcel->addVertex(*this->vertexVec[0]);
-    Dcel::Vertex* b = this->dcel->addVertex(*this->vertexVec[1]);
-    Dcel::Vertex* c = this->dcel->addVertex(*this->vertexVec[2]);
-    Dcel::Vertex* d = this->dcel->addVertex(*this->vertexVec[3]);
+    Dcel::Vertex* a = this->dcel->addVertex(this->vertexVec[0]);
+    Dcel::Vertex* b = this->dcel->addVertex(this->vertexVec[1]);
+    Dcel::Vertex* c = this->dcel->addVertex(this->vertexVec[2]);
+    Dcel::Vertex* d = this->dcel->addVertex(this->vertexVec[3]);
     
     Dcel::HalfEdge* he1In = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2In = this->dcel->addHalfEdge();
@@ -229,13 +230,27 @@ Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge
     he2->setToVertex(otherVertex);
     he2->setNext(he3);
     he2->setPrev(he1);
+
+    //set the twin
     adjustTwin(he2);
+    /*if(existingHe->getPrev()->getTwin() != nullptr){
+        he2->setTwin(existingHe->getPrev()->getTwin()->getPrev());
+        existingHe->getPrev()->getTwin()->getPrev()->setTwin(he2);
+    }*/
     
+
     he3->setFromVertex(otherVertex);
     he3->setToVertex(endVertex);
     he3->setNext(he1);
     he3->setPrev(he2);
+
+    //set the twin
     adjustTwin(he3);
+    /*if(existingHe->getNext()->getTwin() != nullptr){
+        he3->setTwin(existingHe->getNext()->getTwin()->getNext());
+        existingHe->getNext()->getTwin()->getNext()->setTwin(he3);
+    }*/
+
     
     Dcel::Face* face = this->dcel->addFace();
     face->setOuterHalfEdge(he1);
@@ -259,16 +274,16 @@ void ConvexHullCreator::adjustTwin(Dcel::HalfEdge* he){
     Dcel::Vertex* endVertex = he->getToVertex();
 
     bool flag = false;
-    
+
     //Iterate on the outgoing half edge of the end vertex of the input half edge
     for (Dcel::HalfEdgeIterator heit = dcel->halfEdgeBegin(); heit != dcel->halfEdgeEnd(); ++heit){
         Dcel::HalfEdge* candidateTwin = *heit;
-        
+
         //if an half edge has the end vertex equal to the start vertex of the input half egde it's his twin
         if(candidateTwin->getToVertex() == startVertex && candidateTwin->getFromVertex() == endVertex){
             candidateTwin->setTwin(he);
             he->setTwin(candidateTwin);
-            
+
             //I've found the twin, no need to keep iterating
             flag = true;
             break;
@@ -284,7 +299,7 @@ void ConvexHullCreator::getVertices(){
     Dcel::VertexIterator vit;
     int i=0;
     for(vit = dcel->vertexBegin(); vit != dcel->vertexEnd(); ++vit){
-        this->vertexVec[i] = new Dcel::Vertex(**vit);
+        this->vertexVec[i] = (*vit)->getCoordinate();
         i++;
     }
 }

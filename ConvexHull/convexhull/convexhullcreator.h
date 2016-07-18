@@ -10,7 +10,7 @@
 #include "conflictgraph.h"
 
 class ConvexHullCreator {
-    std::vector<Dcel::Vertex*> vertexVec;
+    std::vector<Pointd> vertexVec;
     DrawableDcel* dcel;
 public:
     ConvexHullCreator(DrawableDcel* dcel);
