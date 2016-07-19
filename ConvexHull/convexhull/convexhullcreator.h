@@ -7,6 +7,7 @@
 #include <iostream>
 #include <algorithm>
 #include <cstdlib>
+#include <unordered_set>
 #include "conflictgraph.h"
 
 class ConvexHullCreator {
@@ -25,8 +26,8 @@ private:
     void removeHalfEdgeList(std::list<Dcel::HalfEdge*> &heList);
     void adjustTwin1(Dcel::HalfEdge *he, std::list<Dcel::Face *> &faceList);
     Dcel::Face *addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
-    void removeVisibleFaces(std::set<Dcel::Face *> &faceList);
-    std::list<Dcel::HalfEdge*> getHorizon(std::set<Dcel::Face*>* visibleFaces);
+    void removeVisibleFaces(std::unordered_set<Dcel::Face *> &faceList);
+    std::list<Dcel::HalfEdge*> getHorizon(std::unordered_set<Dcel::Face *> *visibleFaces);
 
 };
 

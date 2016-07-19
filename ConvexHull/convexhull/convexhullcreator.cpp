@@ -32,7 +32,7 @@ void ConvexHullCreator::calculate(){
         dcel->clearDebugCylinders();
         dcel->clearDebugSpheres();
 
-        std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(vertexVec[i]);
+        std::unordered_set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(vertexVec[i]);
 
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
@@ -45,7 +45,7 @@ void ConvexHullCreator::calculate(){
 
             //checkSanity();
 
-            std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
+            //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
 
@@ -62,22 +62,23 @@ void ConvexHullCreator::calculate(){
                 newFaces.push_back(newFace);
 
                 //conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
-                //conflictGraph.updateNaive(newFace);
+                conflictGraph.updateNaive(newFace);
                 dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.01, QColor(255,0,0));
             }
 
             setTwins(newFaces);
 
             conflictGraph.deleteFaces(visibleFaces);
-            conflictGraph = ConflictGraph(dcel, vertexVec);
+            //conflictGraph = ConflictGraph(dcel, vertexVec);
             dcel->addDebugSphere(vertexVec[i], 0.01, QColor(255,0,0));
+            count++;
 
         }
 
         conflictGraph.deletePoint(vertexVec[i]);
 
-        if(count == 15){
-            //return;
+        if(count == 20){
+            return;
         }
 
     }
@@ -86,13 +87,13 @@ void ConvexHullCreator::calculate(){
     std::cout << "#FACES " << dcel->getNumberFaces() << std::endl;
 }
 
-std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::set<Dcel::Face*>* visibleFaces){
+std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel::Face*>* visibleFaces){
 
     std::list<Dcel::HalfEdge*> horizon;
     Dcel::HalfEdge* first;
 
     //cerco un edge dell'orizzonte
-    for(std::set<Dcel::Face*>::iterator fit = visibleFaces->begin(); fit != visibleFaces->end(); ++fit){
+    for(std::unordered_set<Dcel::Face*>::iterator fit = visibleFaces->begin(); fit != visibleFaces->end(); ++fit){
 
         Dcel::Face* faceToRemove = *fit;
 
@@ -112,7 +113,7 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::set<Dcel::Face*>* 
     }
 
     //prendo il resto dell'orizzonte
-    Dcel::HalfEdge *current, *next, *twin;
+    Dcel::HalfEdge *current, *next, *twinOfNext;
     Dcel::Face *incidentFace;
 
     current = first;
@@ -120,14 +121,14 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::set<Dcel::Face*>* 
 
     do{
         next = current->getNext();
-        twin = next->getTwin();
-        incidentFace = twin->getFace();
+        twinOfNext = next->getTwin();
+        incidentFace = twinOfNext->getFace();
 
         if(visibleFaces->count(incidentFace) == 1){
             horizon.push_back(next);
             current = next;
         } else {
-            current = twin;
+            current = twinOfNext;
         }
     } while (first != current && first != current->getNext());
 
@@ -135,11 +136,11 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::set<Dcel::Face*>* 
 
 }
 
-void ConvexHullCreator::removeVisibleFaces(std::set<Dcel::Face*> &faceList){
+void ConvexHullCreator::removeVisibleFaces(std::unordered_set<Dcel::Face*> &faceList){
 
     std::list<Dcel::Vertex*> vertexToRemove;
 
-    for(std::set<Dcel::Face*>::iterator it = faceList.begin(); it != faceList.end(); ++it){
+    for(std::unordered_set<Dcel::Face*>::iterator it = faceList.begin(); it != faceList.end(); ++it){
 
         Dcel::Face* face = *it;
 

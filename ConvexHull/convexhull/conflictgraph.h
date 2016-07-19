@@ -5,6 +5,7 @@
 #include "lib/dcel/drawable_dcel.h"
 #include <map>
 #include <vector>
+#include <unordered_set>
 
 class ConflictGraph
 {
@@ -15,12 +16,12 @@ class ConflictGraph
 
     std::set<std::pair<Pointd, Dcel::Face*>> conflict;
 public:
-    ConflictGraph(DrawableDcel* dcel, const std::vector<Pointd> &vertexVec);
-    std::set<Dcel::Face*>* getVisibleFaces(Pointd &vertex);
+    ConflictGraph(DrawableDcel* dcel, std::vector<Pointd> vertexVec);
+    std::unordered_set<Dcel::Face *> *getVisibleFaces(Pointd &vertex);
     std::set<Pointd> *getVisibleVertices(Dcel::Face *face);
     bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
     void updateConflictGraph(Dcel::Face* face, const std::set<Pointd*> &candidateVertices);
-    void deleteFaces(std::set<Dcel::Face*>* faces);
+    void deleteFaces(std::unordered_set<Dcel::Face*>* faces);
     void deletePoint(Pointd &vertex);
     void updateNaive(Dcel::Face *face);
 private:
