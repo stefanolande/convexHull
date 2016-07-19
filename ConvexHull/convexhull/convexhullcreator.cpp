@@ -34,9 +34,6 @@ void ConvexHullCreator::calculate(){
 
         std::set<Dcel::Face*>* visibleFaces = conflictGraph.getVisibleFaces(vertexVec[i]);
 
-
-
-
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
 
@@ -71,20 +68,17 @@ void ConvexHullCreator::calculate(){
 
             setTwins(newFaces);
 
+            conflictGraph.deleteFaces(visibleFaces);
+            conflictGraph = ConflictGraph(dcel, vertexVec);
+            dcel->addDebugSphere(vertexVec[i], 0.01, QColor(255,0,0));
+
         }
 
-        //conflictGraph.deleteFaces(visibleFaces);
-        //conflictGraph.deletePoint(vertexVec[i]);
-
-        dcel->addDebugSphere(vertexVec[i], 0.01, QColor(255,0,0));
+        conflictGraph.deletePoint(vertexVec[i]);
 
         if(count == 15){
-            return;
+            //return;
         }
-
-        conflictGraph = ConflictGraph(dcel, vertexVec);
-
-
 
     }
 
@@ -128,10 +122,6 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::set<Dcel::Face*>* 
         next = current->getNext();
         twin = next->getTwin();
         incidentFace = twin->getFace();
-
-        if(visibleFaces->count(incidentFace) > 1){
-            std::cout << "COSE" << std::endl;
-        }
 
         if(visibleFaces->count(incidentFace) == 1){
             horizon.push_back(next);
@@ -288,7 +278,7 @@ Dcel::Face* ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, 
     he1->setNext(he2);
     he1->setPrev(he3);
     he1->setTwin(existingHe);
-    existingHe->setTwin(he1);    
+    existingHe->setTwin(he1);
     endVertex->incrementCardinality();
     startVertex->incrementCardinality();
     
