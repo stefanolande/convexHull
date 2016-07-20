@@ -1,5 +1,26 @@
 #include "convexhullcreator.h"
 
+namespace std {
+template<>
+class hash<Pointd> {
+public:
+    size_t operator()(const Pointd& k) const
+    {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+
+        // Compute individual hash values for xCoord,
+        // yCoord and zCoord and combine them using XOR
+        // and bit shifting:
+
+        return ((hash<double>()(k.x())
+                 ^ (hash<double>()(k.y()) << 1)) >> 1)
+                ^ (hash<double>()(k.z()) << 1);
+    }
+};
+}
+
 
 ConvexHullCreator::ConvexHullCreator(DrawableDcel* dcel){
     this->dcel = dcel;
@@ -48,7 +69,7 @@ void ConvexHullCreator::calculate(){
             //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
-            std::unordered_map<Dcel::HalfEdge*, std::set<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
+            std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
             removeVisibleFaces(*visibleFaces);
             conflictGraph->deleteFaces(visibleFaces);
@@ -83,22 +104,21 @@ void ConvexHullCreator::calculate(){
             //return;
         }*/
 
+        std::unordered_set<Pointd> prova;
+
     }
-
-
-    std::cout << "#FACES " << dcel->getNumberFaces() << std::endl;
 }
 
-std::unordered_map<Dcel::HalfEdge*, std::set<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
+std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
 
-    std::unordered_map<Dcel::HalfEdge *, std::set<Pointd>*> result;
+    std::unordered_map<Dcel::HalfEdge *, std::unordered_set<Pointd>*> result;
 
     for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
         Dcel::HalfEdge *halfEdge = *it;
         Dcel::Face *face1 = halfEdge->getFace();
         Dcel::Face *face2 = halfEdge->getTwin()->getFace();
 
-        std::set<Pointd> *conflict1, *conflict2;
+        std::unordered_set<Pointd> *conflict1, *conflict2;
         conflict1 = conflictGraph->getVisibleVertices(face1);
         conflict2 = conflictGraph->getVisibleVertices(face2);
 
@@ -234,7 +254,6 @@ void ConvexHullCreator::findValidPermutation(){
             Pointd temp = pointVec[3];
             pointVec[3] = pointVec[index];
             pointVec[index] = pointVec[3];
-
         }
         
     } while(coplanar);
@@ -281,8 +300,6 @@ void ConvexHullCreator::createTetrahedron(){
     he1In->setFace(face1);
     he2In->setFace(face1);
     he3In->setFace(face1);
-
-    std::cout << "Aggiungo faccia " << face1->getId() << std::endl;
     
     addFaceForTetrahedron(d, he1In);
     addFaceForTetrahedron(d, he2In);
@@ -440,15 +457,5 @@ void ConvexHullCreator::getVertices(){
     for(vit = dcel->vertexBegin(); vit != dcel->vertexEnd(); ++vit){
         this->pointVec[i] = (*vit)->getCoordinate();
         i++;
-    }
-}
-
-void ConvexHullCreator::checkSanity(){
-    for (Dcel::HalfEdgeIterator heit = dcel->halfEdgeBegin(); heit != dcel->halfEdgeEnd(); ++heit){
-        Dcel::HalfEdge* he = *heit;
-
-        if(he->getTwin() == nullptr){
-            std::cout << "CHECKSANITY: TWIN NULLO SU FACCIA " << he->getFace()->getId() << std::endl;
-        }
     }
 }

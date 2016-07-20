@@ -1,5 +1,46 @@
 #include "conflictgraph.h"
 
+namespace std {
+template<>
+class hash<Pointd> {
+public:
+    size_t operator()(const Pointd& k) const
+    {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+
+        // Compute individual hash values for xCoord,
+        // yCoord and zCoord and combine them using XOR
+        // and bit shifting:
+
+        return ((hash<double>()(k.x())
+                 ^ (hash<double>()(k.y()) << 1)) >> 1)
+                ^ (hash<double>()(k.z()) << 1);
+    }
+};
+}
+
+namespace std {
+template<>
+class hash<pair<Pointd, Dcel::Face*>> {
+public:
+    size_t operator()(const pair<Pointd, Dcel::Face*>& k) const
+    {
+        using std::size_t;
+        using std::hash;
+        using std::string;
+
+        // Compute individual hash values for xCoord,
+        // yCoord and zCoord and combine them using XOR
+        // and bit shifting:
+
+        return (hash<Pointd>()(k.first)
+                 ^ (hash<Dcel::Face>()(*(k.second)) << 1));
+    }
+};
+}
+
 /**
  * @brief ConflictGraph::ConflictGraph
  * Performs the conflict graph initialization on the input dcel
@@ -34,7 +75,7 @@ std::unordered_set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Pointd &vertex)
 {
     std::unordered_set<Dcel::Face *>* result = new std::unordered_set<Dcel::Face *>();
 
-    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
+    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
         if(vertex == (*it).first){
             result->insert((*it).second);
         }
@@ -43,11 +84,11 @@ std::unordered_set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Pointd &vertex)
     return result;
 }
 
-std::set<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
+std::unordered_set<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
 {
-    std::set<Pointd >* result = new std::set<Pointd >();
+    std::unordered_set<Pointd >* result = new std::unordered_set<Pointd >();
 
-    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
+    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
         if(face == (*it).second){
             result->insert((*it).first);
         }
@@ -82,10 +123,10 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     return (det < -std::numeric_limits<double>::epsilon());
 }
 
-void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::set<Pointd>* candidateVertices)
+void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::unordered_set<Pointd>* candidateVertices)
 {
     //int count=0;
-    for(std::set<Pointd>::iterator it = candidateVertices->begin(); it != candidateVertices->end(); ++it){
+    for(std::unordered_set<Pointd>::iterator it = candidateVertices->begin(); it != candidateVertices->end(); ++it){
         if(checkVisibility(face, *it)){
             this->conflict.insert(std::make_pair(*it, face));
         }
@@ -105,7 +146,7 @@ void ConflictGraph::updateNaive(Dcel::Face* face){
 void ConflictGraph::deleteFaces(std::unordered_set<Dcel::Face *> *faces)
 {
 
-    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
+    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
         if(faces->count(cit->second) == 1){
             this->conflict.erase(cit++);
         } else {
@@ -116,7 +157,7 @@ void ConflictGraph::deleteFaces(std::unordered_set<Dcel::Face *> *faces)
 
 void ConflictGraph::deletePoint(Pointd &vertex)
 {
-    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
+    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
         if((*cit).first == vertex){
             this->conflict.erase(cit++);
         } else {
@@ -125,7 +166,6 @@ void ConflictGraph::deletePoint(Pointd &vertex)
     }
 
     pointList.remove(vertex);
-
 }
 
 

@@ -25,12 +25,10 @@ private:
     void createTetrahedron();
     Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
     void setTwins(std::vector<Dcel::Face *> &faceList);
-    void checkSanity();
-    void adjustTwin1(Dcel::HalfEdge *he, std::list<Dcel::Face *> &faceList);
     Dcel::Face *addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
     void removeVisibleFaces(std::unordered_set<Dcel::Face *> &faceList);
     std::list<Dcel::HalfEdge*> getHorizon(std::unordered_set<Dcel::Face *> *visibleFaces);   
-    std::unordered_map<Dcel::HalfEdge *, std::set<Pointd> *> getCandidateVertexMap(std::list<Dcel::HalfEdge *> horizon);
+    std::unordered_map<Dcel::HalfEdge *, std::unordered_set<Pointd> *> getCandidateVertexMap(std::list<Dcel::HalfEdge *> horizon);
 };
 
 #endif

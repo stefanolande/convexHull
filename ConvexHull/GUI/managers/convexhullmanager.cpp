@@ -59,8 +59,8 @@ void ConvexHullManager::on_convexHullPushButton_clicked() {
             /********************************
              * Begin Convex Hull Algorithm  *
              ********************************/
-            ConvexHullCreator manager(dcel);
-            manager.calculate();
+            ConvexHullCreator chCreator(dcel);
+            chCreator.calculate();
 
 
             /********************************
