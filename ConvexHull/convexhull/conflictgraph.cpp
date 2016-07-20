@@ -4,29 +4,27 @@
  * @brief ConflictGraph::ConflictGraph
  * Performs the conflict graph initialization on the input dcel
  */
-ConflictGraph::ConflictGraph(DrawableDcel *dcelP, std::vector<Pointd> vertexVecP)
+ConflictGraph::ConflictGraph(DrawableDcel *dcelP, const std::vector<Pointd> &vertexVecP)
 {
     this->dcel = dcelP;
-    this->vertexVec = vertexVecP;
+
+    //copy the
+    std::vector<Pointd>::const_iterator it = vertexVecP.begin();
+    it += 3;
+    for(; it != vertexVecP.end(); ++it){
+        this->pointList.push_back(*it);
+    }
 
     std::cout << "Starting conflict graph initialization" << std::endl;
 
-    vertexVecP.erase(vertexVecP.begin());
-    vertexVecP.erase(vertexVecP.begin()+1);
-    vertexVecP.erase(vertexVecP.begin()+2);
-    vertexVecP.erase(vertexVecP.begin()+3);
-
 
     //check the visibility of each face from each point
-    for(unsigned int i=0; i<vertexVec.size(); i++){
+    for(std::list<Pointd>::iterator it = pointList.begin(); it != pointList.end(); ++it){
 
         for(Dcel::FaceIterator fit = dcel->faceBegin(); fit != dcel->faceEnd(); ++fit){
 
-            if(checkVisibility(*fit, vertexVec[i])){
-                //addToFaceMap(*fit, vertexVec[i]);
-                //addToPointMap(vertexVec[i], *fit);
-
-                this->conflict.insert(std::make_pair(vertexVec[i], *fit));
+            if(checkVisibility(*fit, *it)){
+                this->conflict.insert(std::make_pair(*it, *fit));
             }
             
             
@@ -47,12 +45,6 @@ std::unordered_set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Pointd &vertex)
     }
 
     return result;
-
-    /*if(pointMap[vertex] != nullptr){
-        return pointMap[vertex];
-    } else {
-        return new std::set<Dcel::Face *>();
-    }*/
 }
 
 std::set<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
@@ -66,37 +58,8 @@ std::set<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
     }
 
     return result;
-
-    /*if(faceMap[face] != nullptr){
-        return faceMap[face];
-    } else {
-        return new std::set<Dcel::Vertex *>();
-    }*/
 }
 
-
-
-/*void ConflictGraph::addToFaceMap(Dcel::Face* face, const Pointd &vertexToAdd){
-    std::set<Dcel::Vertex*>* associatedVertexSet = faceMap[face];
-
-    if(associatedVertexSet == nullptr){
-        associatedVertexSet = new std::set<Dcel::Vertex*>();
-        faceMap[face] = associatedVertexSet;
-    }
-
-    associatedVertexSet->insert(vertexToAdd);
-}*/
-
-/*void ConflictGraph::addToPointMap(const Pointd &vertex, Dcel::Face* faceToAdd){
-    std::set<Dcel::Face*>* associatedFaceSet = pointMap[vertex];
-
-    if(associatedFaceSet == nullptr){
-        associatedFaceSet = new std::set<Dcel::Face*>();
-        pointMap[vertex] = associatedFaceSet;
-    }
-
-    associatedFaceSet->insert(faceToAdd);
-}*/
 
 bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     Eigen::Matrix4d matrix;
@@ -118,7 +81,7 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
 
     double det = matrix.determinant();
 
-    //se il determinante è positivo il punto è nello stesso semispazio della normale della faccia
+    //se il determinante è negativo il punto è nello stesso semispazio della normale della faccia
     //la normale punta all'esterno, quindi il punto "vede" la faccia
     return (det < -std::numeric_limits<double>::epsilon());
 }
@@ -128,22 +91,16 @@ void ConflictGraph::updateConflictGraph(Dcel::Face *face, const std::set<Pointd 
     //int count=0;
     for(std::set<Pointd*>::iterator it = candidateVertices.begin(); it != candidateVertices.end(); ++it){
         if(checkVisibility(face, **it)){
-            //addToFaceMap(face, *it);
-            //addToPointMap(*it, face);
-            //count++;
             this->conflict.insert(std::make_pair(**it, face));
         }
     }
-    //std::cout << "Added " << count << " links" << std::endl;
 }
 
 void ConflictGraph::updateNaive(Dcel::Face* face){
-    for(unsigned int i=0; i<vertexVec.size(); i++){
-        if(checkVisibility(face, vertexVec[i])){
-            //addToFaceMap(face, *it);
-            //addToPointMap(*it, face);
-            //count++;
-            this->conflict.insert(std::make_pair(vertexVec[i], face));
+    for(std::list<Pointd>::iterator it = pointList.begin(); it != pointList.end(); ++it){
+
+        if(checkVisibility(face, *it)){
+            this->conflict.insert(std::make_pair(*it, face));
         }
     }
 
@@ -151,33 +108,27 @@ void ConflictGraph::updateNaive(Dcel::Face* face){
 
 void ConflictGraph::deleteFaces(std::unordered_set<Dcel::Face *> *faces)
 {
-    for(std::unordered_set<Dcel::Face *>::iterator it = faces->begin(); it != faces->end(); ++it){
 
-        for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end(); ++cit){
-            if((*cit).second == *it){
-                this->conflict.erase(cit);
-            }
+    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
+        if(faces->count(cit->second) == 1){
+            this->conflict.erase(cit++);
+        } else {
+            ++cit;
         }
-
-        /*this->faceMap.erase(*it);
-
-        for(std::map<Dcel::Vertex*, std::set<Dcel::Face*>*>::iterator pit = pointMap.begin(); pit != pointMap.end(); ++pit){
-            if(pit->second != nullptr){
-                pit->second->erase(*it);
-            }
-        }*/
     }
 }
 
 void ConflictGraph::deletePoint(Pointd &vertex)
 {
-    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end(); ++cit){
+    for(std::set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
         if((*cit).first == vertex){
-            this->conflict.erase(cit);
+            this->conflict.erase(cit++);
+        } else {
+            ++cit;
         }
     }
 
-    vertexVec.erase(std::remove(vertexVec.begin(), vertexVec.end(), vertex), vertexVec.end());
+    pointList.remove(vertex);
 
 }
 
