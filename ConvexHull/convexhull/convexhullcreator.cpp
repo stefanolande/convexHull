@@ -207,12 +207,13 @@ void ConvexHullCreator::findValidPermutation(){
     //get a random permutation that starts with 4 non coplanar vertices
     bool coplanar = true;
     
-    //std::srand(std::time(0));
+    std::srand(std::time(0));
+
+    //calculate a random permutation of the vertices vector
+    std::random_shuffle(this->pointVec.begin(), this->pointVec.end());
+
     
     do{
-        //calculate a random permutation of the vertices vector
-        std::random_shuffle(this->pointVec.begin(), this->pointVec.end());
-        
         //check if the first point are coplanar
         Eigen::Matrix4d matrix;
         for(int i=0; i<4; i++){
@@ -223,13 +224,18 @@ void ConvexHullCreator::findValidPermutation(){
         }
         
         double det = matrix.determinant();
-        
-        std::cout << det << std::endl;
-        
+                
         //check if the determinant is 0 +- epsilon
         coplanar = det > -std::numeric_limits<double>::epsilon() && det < std::numeric_limits<double>::epsilon();
 
-        //TODO: swap two elements instead of reshuffling the whole vector if coplanar
+        if(coplanar){
+            //swap the fourth element with another in the range (5, size)
+            int index = (std::rand()+4) % (pointVec.size()-4);
+            Pointd temp = pointVec[3];
+            pointVec[3] = pointVec[index];
+            pointVec[index] = pointVec[3];
+
+        }
         
     } while(coplanar);
 }

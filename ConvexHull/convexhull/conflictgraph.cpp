@@ -15,9 +15,6 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, const std::vector<Pointd> &ver
         this->pointList.push_back(*it);
     }
 
-    std::cout << "Starting conflict graph initialization" << std::endl;
-
-
     //check the visibility of each face from each point
     for(std::list<Pointd>::iterator it = pointList.begin(); it != pointList.end(); ++it){
 
@@ -31,7 +28,6 @@ ConflictGraph::ConflictGraph(DrawableDcel *dcelP, const std::vector<Pointd> &ver
         }
     }
 
-    std::cout << "Conflict graph initialization completed" << std::endl;
 }
 
 std::unordered_set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Pointd &vertex)
