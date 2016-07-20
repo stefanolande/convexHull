@@ -20,7 +20,7 @@ public:
     std::unordered_set<Dcel::Face *> *getVisibleFaces(Pointd &vertex);
     std::set<Pointd> *getVisibleVertices(Dcel::Face *face);
     bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
-    void updateConflictGraph(Dcel::Face* face, const std::set<Pointd*> &candidateVertices);
+    void updateConflictGraph(Dcel::Face* face, std::set<Pointd> *candidateVertices);
     void deleteFaces(std::unordered_set<Dcel::Face*>* faces);
     void deletePoint(Pointd &vertex);
     void updateNaive(Dcel::Face *face);

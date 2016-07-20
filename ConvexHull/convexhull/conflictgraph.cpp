@@ -86,12 +86,12 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     return (det < -std::numeric_limits<double>::epsilon());
 }
 
-void ConflictGraph::updateConflictGraph(Dcel::Face *face, const std::set<Pointd *> &candidateVertices)
+void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::set<Pointd>* candidateVertices)
 {
     //int count=0;
-    for(std::set<Pointd*>::iterator it = candidateVertices.begin(); it != candidateVertices.end(); ++it){
-        if(checkVisibility(face, **it)){
-            this->conflict.insert(std::make_pair(**it, face));
+    for(std::set<Pointd>::iterator it = candidateVertices->begin(); it != candidateVertices->end(); ++it){
+        if(checkVisibility(face, *it)){
+            this->conflict.insert(std::make_pair(*it, face));
         }
     }
 }

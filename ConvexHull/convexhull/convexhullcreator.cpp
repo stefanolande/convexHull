@@ -17,7 +17,7 @@ void ConvexHullCreator::calculate(){
     //clear the initial dcel
     dcel->reset();
     
-    //findValidPermutation();
+    findValidPermutation();
     
     //create the inital tetrahedron
     createTetrahedron();
@@ -63,25 +63,25 @@ void ConvexHullCreator::calculate(){
                 Dcel::Face* newFace = addFace(newVertex, halfEdge);
                 newFaces.push_back(newFace);
 
-                //conflictGraph.updateConflictGraph(newFace, candidateVisibleVerticesMap[halfEdge]);
+                conflictGraph->updateConflictGraph(newFace, candidateVertexMap[halfEdge]);
 
-                conflictGraph->updateNaive(newFace);
-                dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.005, QColor(255,0,0));
+                //conflictGraph->updateNaive(newFace);
+                //dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.005, QColor(255,0,0));
             }
 
             setTwins(newFaces);
 
             //conflictGraph = new ConflictGraph(dcel, pointVec);
-            dcel->addDebugSphere(pointVec[i], 0.005, QColor(255,0,0));
+            //dcel->addDebugSphere(pointVec[i], 0.005, QColor(255,0,0));
             count++;
 
         }
 
         conflictGraph->deletePoint(pointVec[i]);
 
-        if(count > 100){
+        /*if(count > 100){
             //return;
-        }
+        }*/
 
     }
 
