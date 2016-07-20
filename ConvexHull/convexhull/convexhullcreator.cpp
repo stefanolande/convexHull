@@ -1,27 +1,5 @@
 #include "convexhullcreator.h"
 
-namespace std {
-template<>
-class hash<Pointd> {
-public:
-    size_t operator()(const Pointd& k) const
-    {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-
-        // Compute individual hash values for xCoord,
-        // yCoord and zCoord and combine them using XOR
-        // and bit shifting:
-
-        return ((hash<double>()(k.x())
-                 ^ (hash<double>()(k.y()) << 1)) >> 1)
-                ^ (hash<double>()(k.z()) << 1);
-    }
-};
-}
-
-
 ConvexHullCreator::ConvexHullCreator(DrawableDcel* dcel){
     this->dcel = dcel;
     this->pointVec = std::vector<Pointd>(dcel->getNumberVertices());
@@ -229,8 +207,11 @@ void ConvexHullCreator::findValidPermutation(){
     
     std::srand(std::time(0));
 
+    std::random_device rd;
+    std::mt19937 g(rd());
+
     //calculate a random permutation of the vertices vector
-    std::random_shuffle(this->pointVec.begin(), this->pointVec.end());
+    std::shuffle(this->pointVec.begin(), this->pointVec.end(), g);
 
     
     do{
@@ -244,7 +225,7 @@ void ConvexHullCreator::findValidPermutation(){
         }
         
         double det = matrix.determinant();
-                
+
         //check if the determinant is 0 +- epsilon
         coplanar = det > -std::numeric_limits<double>::epsilon() && det < std::numeric_limits<double>::epsilon();
 

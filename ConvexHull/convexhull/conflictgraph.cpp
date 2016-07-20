@@ -1,46 +1,5 @@
 #include "conflictgraph.h"
 
-namespace std {
-template<>
-class hash<Pointd> {
-public:
-    size_t operator()(const Pointd& k) const
-    {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-
-        // Compute individual hash values for xCoord,
-        // yCoord and zCoord and combine them using XOR
-        // and bit shifting:
-
-        return ((hash<double>()(k.x())
-                 ^ (hash<double>()(k.y()) << 1)) >> 1)
-                ^ (hash<double>()(k.z()) << 1);
-    }
-};
-}
-
-namespace std {
-template<>
-class hash<pair<Pointd, Dcel::Face*>> {
-public:
-    size_t operator()(const pair<Pointd, Dcel::Face*>& k) const
-    {
-        using std::size_t;
-        using std::hash;
-        using std::string;
-
-        // Compute individual hash values for xCoord,
-        // yCoord and zCoord and combine them using XOR
-        // and bit shifting:
-
-        return (hash<Pointd>()(k.first)
-                 ^ (hash<Dcel::Face>()(*(k.second)) << 1));
-    }
-};
-}
-
 /**
  * @brief ConflictGraph::ConflictGraph
  * Performs the conflict graph initialization on the input dcel
