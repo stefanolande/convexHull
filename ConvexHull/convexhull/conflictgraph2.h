@@ -7,23 +7,28 @@
 #include <map>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
 
-class ConflictGraph
+class ConflictGraph2
 {    
 public:
-    ConflictGraph(DrawableDcel* dcel, const std::vector<Pointd> &pointList);
+    ConflictGraph2(DrawableDcel* dcel, const std::vector<Pointd> &pointList);
     std::unordered_set<Dcel::Face *> *getVisibleFaces(Pointd &vertex);
     std::unordered_set<Pointd> *getVisibleVertices(Dcel::Face *face);
     void updateConflictGraph(Dcel::Face* face, std::unordered_set<Pointd> *candidateVertices);
-    void deleteFaces(std::unordered_set<Dcel::Face*>* faces);
+    void deleteFaces(std::unordered_set<Dcel::Face *> &faces);
     void deletePoint(Pointd &vertex);
     void updateNaive(Dcel::Face *face);
 private:
     DrawableDcel* dcel;
     std::list<Pointd> pointList;
-    std::unordered_set<std::pair<Pointd, Dcel::Face*>> conflict;
-    bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
 
+    std::unordered_map<Pointd, std::unordered_set<Dcel::Face*>*> Fconflict;
+    std::unordered_map<Dcel::Face*, std::unordered_set<Pointd>*> Pconflict;
+
+    bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
+    void insertInFconflict(Pointd point, Dcel::Face *face);
+    void insertInPconflict(Pointd point, Dcel::Face *face);
 };
 
 #endif // CONFLICTGRAPH_H

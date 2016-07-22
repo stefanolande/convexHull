@@ -22,7 +22,7 @@ void ConvexHullCreator::calculate(){
     createTetrahedron();
 
     //initialize the conflict graph
-    conflictGraph = new ConflictGraph(dcel, pointVec);
+    conflictGraph = new ConflictGraph2(dcel, pointVec);
 
     //start the incremental cycle
     //for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
@@ -49,8 +49,8 @@ void ConvexHullCreator::calculate(){
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
             std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
+            conflictGraph->deleteFaces(*visibleFaces);
             removeVisibleFaces(*visibleFaces);
-            conflictGraph->deleteFaces(visibleFaces);
 
             //std::cout << "#HE on horizon " << horizon.size() << std::endl;
 

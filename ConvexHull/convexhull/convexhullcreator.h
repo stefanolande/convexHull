@@ -10,7 +10,7 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <random>
-#include "conflictgraph.h"
+#include "conflictgraph2.h"
 
 class ConvexHullCreator {
 public:
@@ -19,7 +19,7 @@ public:
 private:
     std::vector<Pointd> pointVec;
     DrawableDcel *dcel;
-    ConflictGraph *conflictGraph;
+    ConflictGraph2 *conflictGraph;
 
     void getVertices();
     void findValidPermutation();
