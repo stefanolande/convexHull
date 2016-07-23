@@ -31,7 +31,7 @@ void ConvexHullCreator::calculate(){
         dcel->clearDebugCylinders();
         dcel->clearDebugSpheres();
 
-        std::unordered_set<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
+        hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
 
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
@@ -47,10 +47,10 @@ void ConvexHullCreator::calculate(){
             //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
-            std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
+            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
-            conflictGraph->deleteFaces(*visibleFaces);
-            removeVisibleFaces(*visibleFaces);
+            conflictGraph->deleteFaces(visibleFaces);
+            removeVisibleFaces(visibleFaces);
 
             //std::cout << "#HE on horizon " << horizon.size() << std::endl;
 
@@ -85,16 +85,16 @@ void ConvexHullCreator::calculate(){
     }
 }
 
-std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
+hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
 
-    std::unordered_map<Dcel::HalfEdge *, std::unordered_set<Pointd>*> result;
+    hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd>*> result;
 
     for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
         Dcel::HalfEdge *halfEdge = *it;
         Dcel::Face *face1 = halfEdge->getFace();
         Dcel::Face *face2 = halfEdge->getTwin()->getFace();
 
-        std::unordered_set<Pointd> *conflict1, *conflict2;
+        hashlib::pool<Pointd> *conflict1, *conflict2;
         conflict1 = conflictGraph->getVisibleVertices(face1);
         conflict2 = conflictGraph->getVisibleVertices(face2);
 
@@ -108,14 +108,14 @@ std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*> ConvexHullCreat
 
 }
 
-std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel::Face*>* visibleFaces){
+std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Face*>* visibleFaces){
 
     std::list<Dcel::HalfEdge*> horizon;
     Dcel::HalfEdge* first;
 
     //cerco un edge dell'orizzonte
     bool found = false;
-    std::unordered_set<Dcel::Face*>::iterator fit;
+    hashlib::pool<Dcel::Face*>::iterator fit;
     for(fit = visibleFaces->begin(); fit != visibleFaces->end() && !found; ++fit){
 
         Dcel::Face* visibleFace = *fit;
@@ -160,11 +160,11 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel
 
 }
 
-void ConvexHullCreator::removeVisibleFaces(std::unordered_set<Dcel::Face*> &faceList){
+void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList){
 
     std::list<Dcel::Vertex*> vertexToRemove;
 
-    for(std::unordered_set<Dcel::Face*>::iterator it = faceList.begin(); it != faceList.end(); ++it){
+    for(hashlib::pool<Dcel::Face*>::iterator it = faceList->begin(); it != faceList->end(); ++it){
 
         Dcel::Face* face = *it;
 

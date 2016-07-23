@@ -30,28 +30,28 @@ ConflictGraph2::ConflictGraph2(DrawableDcel *dcelP, const std::vector<Pointd> &v
 
 }
 
-std::unordered_set<Dcel::Face *>* ConflictGraph2::getVisibleFaces(Pointd &vertex)
+hashlib::pool<Dcel::Face *> *ConflictGraph2::getVisibleFaces(Pointd &vertex)
 {
-    std::unordered_set<Dcel::Face *> *faces =  this->Fconflict[vertex];
+    hashlib::pool<Dcel::Face *> *faces =  this->Fconflict[vertex];
 
     if(faces == nullptr){
-        faces = new std::unordered_set<Dcel::Face *>;
+        faces = new hashlib::pool<Dcel::Face *>;
         this->Fconflict[vertex] = faces;
     }
 
-    return faces;
+    return new hashlib::pool<Dcel::Face *>(*faces);
 }
 
-std::unordered_set<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
+hashlib::pool<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
 {
-    std::unordered_set<Pointd> *vertices = this->Pconflict[face];
+    hashlib::pool<Pointd> *vertices = this->Pconflict[face];
 
     if(vertices == nullptr){
-        vertices = new std::unordered_set<Pointd>;
+        vertices = new hashlib::pool<Pointd>;
         this->Pconflict[face] = vertices;
     }
 
-    return vertices;
+    return new hashlib::pool<Pointd>(*vertices);
 }
 
 
@@ -84,7 +84,7 @@ void ConflictGraph2::insertInFconflict(Pointd point, Dcel::Face *face)
 {
 
     if(this->Fconflict[point] == nullptr){
-        this->Fconflict[point] = new std::unordered_set<Dcel::Face*>;
+        this->Fconflict[point] = new hashlib::pool<Dcel::Face*>;
     }
 
     this->Fconflict[point]->insert(face);
@@ -93,16 +93,16 @@ void ConflictGraph2::insertInFconflict(Pointd point, Dcel::Face *face)
 void ConflictGraph2::insertInPconflict(Pointd point, Dcel::Face *face)
 {
     if(this->Pconflict[face] == nullptr){
-        this->Pconflict[face] = new std::unordered_set<Pointd>;
+        this->Pconflict[face] = new hashlib::pool<Pointd>;
     }
 
     this->Pconflict[face]->insert(point);
 }
 
-void ConflictGraph2::updateConflictGraph(Dcel::Face *face, std::unordered_set<Pointd>* candidateVertices)
+void ConflictGraph2::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd>* candidateVertices)
 {
     //int count=0;
-    for(std::unordered_set<Pointd>::iterator pit = candidateVertices->begin(); pit != candidateVertices->end(); ++pit){
+    for(hashlib::pool<Pointd>::iterator pit = candidateVertices->begin(); pit != candidateVertices->end(); ++pit){
         if(checkVisibility(face, *pit)){
             insertInFconflict(*pit, face);
             insertInPconflict(*pit, face);
@@ -121,17 +121,17 @@ void ConflictGraph2::updateNaive(Dcel::Face* face){
 
 }
 
-void ConflictGraph2::deleteFaces(std::unordered_set<Dcel::Face *> &faces)
-{
-    std::unordered_set<Dcel::Face *>::iterator fit;
-    for(fit = faces.begin(); fit != faces.end(); ++fit){
+void ConflictGraph2::deleteFaces(hashlib::pool<Dcel::Face *> *faces)
+{   
+    hashlib::pool<Dcel::Face*>::const_iterator fit;
+    for(fit = faces->begin(); fit != faces->end(); ++fit){
 
-        std::unordered_set<Pointd> *visiblePoints = this->Pconflict[*fit];
+        hashlib::pool<Pointd> *visiblePoints = this->Pconflict[*fit];
 
         if(visiblePoints != nullptr){
             this->Pconflict.erase(*fit);
 
-            std::unordered_set<Pointd>::iterator pit;
+            hashlib::pool<Pointd>::iterator pit;
             for(pit = visiblePoints->begin(); pit != visiblePoints->end(); ++pit){
 
                 auto associatedSet = this->Fconflict[*pit];
@@ -141,18 +141,17 @@ void ConflictGraph2::deleteFaces(std::unordered_set<Dcel::Face *> &faces)
             }
         }
     }
-
 }
 
 
 void ConflictGraph2::deletePoint(Pointd &vertex)
 {
-    std::unordered_set<Dcel::Face*> *visibleFace = this->Fconflict[vertex];
+    hashlib::pool<Dcel::Face*> *visibleFace = this->Fconflict[vertex];
 
     if(visibleFace != nullptr){
         this->Fconflict.erase(vertex);
 
-        std::unordered_set<Dcel::Face *>::iterator fit;
+        hashlib::pool<Dcel::Face *>::iterator fit;
         for(fit = visibleFace->begin(); fit != visibleFace->end(); ++fit){
 
             auto associatedSet = this->Pconflict[*fit];

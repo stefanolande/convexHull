@@ -8,23 +8,24 @@
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>
+#include "hashlib.h"
 
 class ConflictGraph2
 {    
-public:
+public:    
     ConflictGraph2(DrawableDcel* dcel, const std::vector<Pointd> &pointList);
-    std::unordered_set<Dcel::Face *> *getVisibleFaces(Pointd &vertex);
-    std::unordered_set<Pointd> *getVisibleVertices(Dcel::Face *face);
-    void updateConflictGraph(Dcel::Face* face, std::unordered_set<Pointd> *candidateVertices);
-    void deleteFaces(std::unordered_set<Dcel::Face *> &faces);
+    hashlib::pool<Dcel::Face *> *getVisibleFaces(Pointd &vertex);
+    hashlib::pool<Pointd> *getVisibleVertices(Dcel::Face *face);
+    void updateConflictGraph(Dcel::Face* face, hashlib::pool<Pointd> *candidateVertices);
+    void deleteFaces(hashlib::pool<Dcel::Face *> *faces);
     void deletePoint(Pointd &vertex);
     void updateNaive(Dcel::Face *face);
 private:
     DrawableDcel* dcel;
     std::list<Pointd> pointList;
 
-    std::unordered_map<Pointd, std::unordered_set<Dcel::Face*>*> Fconflict;
-    std::unordered_map<Dcel::Face*, std::unordered_set<Pointd>*> Pconflict;
+    hashlib::dict<Pointd, hashlib::pool<Dcel::Face*>*> Fconflict;
+    hashlib::dict<Dcel::Face*, hashlib::pool<Pointd>*> Pconflict;
 
     bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
     void insertInFconflict(Pointd point, Dcel::Face *face);
