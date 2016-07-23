@@ -82,8 +82,6 @@ void ConvexHullCreator::calculate(){
             //return;
         }*/
 
-        std::unordered_set<Pointd> prova;
-
     }
 }
 
@@ -116,14 +114,15 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel
     Dcel::HalfEdge* first;
 
     //cerco un edge dell'orizzonte
+    bool found = false;
     std::unordered_set<Dcel::Face*>::iterator fit;
-    for(fit = visibleFaces->begin(); fit != visibleFaces->end(); ++fit){
+    for(fit = visibleFaces->begin(); fit != visibleFaces->end() && !found; ++fit){
 
         Dcel::Face* visibleFace = *fit;
 
         //remove all the half edges of the face
         Dcel::Face::IncidentHalfEdgeIterator iheit;
-        for(iheit = visibleFace ->incidentHalfEdgeBegin(); iheit != visibleFace ->incidentHalfEdgeEnd(); ++iheit){
+        for(iheit = visibleFace ->incidentHalfEdgeBegin(); iheit != visibleFace ->incidentHalfEdgeEnd() && !found; ++iheit){
             Dcel::HalfEdge* heToRemove = *iheit;
 
 
@@ -131,7 +130,7 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel
                 //if the twin of an he has the incident face outside the visible faces, it is part of the horizon
                 if(visibleFaces->count(heToRemove->getTwin()->getFace()) == 0){
                     first = heToRemove->getTwin();
-                    break;
+                    found = true;
                 }
             }
         }

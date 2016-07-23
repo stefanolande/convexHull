@@ -36,6 +36,7 @@ std::unordered_set<Dcel::Face *>* ConflictGraph2::getVisibleFaces(Pointd &vertex
 
     if(faces == nullptr){
         faces = new std::unordered_set<Dcel::Face *>;
+        this->Fconflict[vertex] = faces;
     }
 
     return faces;
@@ -47,6 +48,7 @@ std::unordered_set<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
 
     if(vertices == nullptr){
         vertices = new std::unordered_set<Pointd>;
+        this->Pconflict[face] = vertices;
     }
 
     return vertices;
@@ -132,9 +134,9 @@ void ConflictGraph2::deleteFaces(std::unordered_set<Dcel::Face *> &faces)
             std::unordered_set<Pointd>::iterator pit;
             for(pit = visiblePoints->begin(); pit != visiblePoints->end(); ++pit){
 
-                auto assocaitedSet = this->Fconflict[*pit];
-                if(assocaitedSet != nullptr){
-                    assocaitedSet->erase(*fit);
+                auto associatedSet = this->Fconflict[*pit];
+                if(associatedSet != nullptr){
+                    associatedSet->erase(*fit);
                 }
             }
         }
@@ -153,9 +155,9 @@ void ConflictGraph2::deletePoint(Pointd &vertex)
         std::unordered_set<Dcel::Face *>::iterator fit;
         for(fit = visibleFace->begin(); fit != visibleFace->end(); ++fit){
 
-            auto assocaitedSet = this->Pconflict[*fit];
-            if(assocaitedSet != nullptr){
-                assocaitedSet->erase(vertex);
+            auto associatedSet = this->Pconflict[*fit];
+            if(associatedSet != nullptr){
+                associatedSet->erase(vertex);
             }
         }
     }
