@@ -20,6 +20,7 @@ void ConvexHullCreator::calculate(){
     
     //create the inital tetrahedron
     createTetrahedron();
+    //checkSanity();
 
     //initialize the conflict graph
     conflictGraph = new ConflictGraph2(dcel, pointVec);
@@ -41,8 +42,6 @@ void ConvexHullCreator::calculate(){
             Dcel::Vertex* newVertex = dcel->addVertex(pointVec[i]);
 
             count++;
-
-            //checkSanity();
 
             //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
@@ -437,5 +436,15 @@ void ConvexHullCreator::getVertices(){
     for(vit = dcel->vertexBegin(); vit != dcel->vertexEnd(); ++vit){
         this->pointVec[i] = (*vit)->getCoordinate();
         i++;
+    }
+}
+
+void ConvexHullCreator::checkSanity(){
+    for (Dcel::HalfEdgeIterator heit = dcel->halfEdgeBegin(); heit != dcel->halfEdgeEnd(); ++heit){
+        Dcel::HalfEdge* he = *heit;
+
+        if(he->getTwin() == nullptr){
+            std::cout << "TWIN NULLO SU FACCIA " << he->getFace()->getId() << std::endl;
+        }
     }
 }

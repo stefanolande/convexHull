@@ -30,6 +30,7 @@ private:
     void removeVisibleFaces(std::unordered_set<Dcel::Face *> &faceList);
     std::list<Dcel::HalfEdge*> getHorizon(std::unordered_set<Dcel::Face *> *visibleFaces);   
     std::unordered_map<Dcel::HalfEdge *, std::unordered_set<Pointd> *> getCandidateVertexMap(std::list<Dcel::HalfEdge *> horizon);
+    void checkSanity();
 };
 
 #endif

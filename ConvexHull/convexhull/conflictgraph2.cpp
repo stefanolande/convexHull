@@ -39,7 +39,7 @@ std::unordered_set<Dcel::Face *>* ConflictGraph2::getVisibleFaces(Pointd &vertex
         this->Fconflict[vertex] = faces;
     }
 
-    return faces;
+    return new std::unordered_set<Dcel::Face *>(*faces);
 }
 
 std::unordered_set<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
@@ -51,7 +51,7 @@ std::unordered_set<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
         this->Pconflict[face] = vertices;
     }
 
-    return vertices;
+    return new std::unordered_set<Pointd>(*vertices);
 }
 
 
