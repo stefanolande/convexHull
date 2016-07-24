@@ -136,25 +136,29 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Fac
         }
     }
 
-    //prendo il resto dell'orizzonte
-    Dcel::HalfEdge *current, *next, *twinOfNext;
-    Dcel::Face *incidentFace;
+    if(first != nullptr){
+        //prendo il resto dell'orizzonte
+        Dcel::HalfEdge *current, *next, *twinOfNext;
+        Dcel::Face *incidentFace;
 
-    current = first;
-    horizon.push_front(first);
+        current = first;
+        horizon.push_front(first);
 
-    do{
-        next = current->getNext();
-        twinOfNext = next->getTwin();
-        incidentFace = twinOfNext->getFace();
+        do{
+            next = current->getNext();
+            twinOfNext = next->getTwin();
+            incidentFace = twinOfNext->getFace();
 
-        if(visibleFaces->count(incidentFace) == 1){
-            horizon.push_back(next);
-            current = next;
-        } else {
-            current = twinOfNext;
-        }
-    } while (first != current && first != current->getNext());
+            if(visibleFaces->count(incidentFace) == 1){
+                horizon.push_back(next);
+                current = next;
+            } else {
+                current = twinOfNext;
+            }
+        } while (first != current && first != current->getNext());
+    } else {
+        throw std::runtime_error("Error in visible faces!");
+    }
 
     return horizon;
 

@@ -40,6 +40,7 @@ hashlib::pool<Dcel::Face *> *ConflictGraph2::getVisibleFaces(Pointd &vertex)
     }
 
     return new hashlib::pool<Dcel::Face *>(*faces);
+    //return faces;
 }
 
 hashlib::pool<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
@@ -52,6 +53,7 @@ hashlib::pool<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
     }
 
     return new hashlib::pool<Pointd>(*vertices);
+    //return vertices;
 }
 
 
