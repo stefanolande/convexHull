@@ -10,20 +10,18 @@
 #include <unordered_map>
 #include "hashlib.h"
 
-class ConflictGraph2
+class ConflictGraph
 {    
 public:    
-    ConflictGraph2(DrawableDcel* dcel, const std::vector<Pointd> &pointList);
+    ConflictGraph(DrawableDcel* dcel, const std::vector<Pointd> &pointList);
     hashlib::pool<Dcel::Face *> *getVisibleFaces(Pointd &vertex);
     hashlib::pool<Pointd> *getVisibleVertices(Dcel::Face *face);
     void updateConflictGraph(Dcel::Face* face, hashlib::pool<Pointd> *candidateVertices);
     void deleteFaces(hashlib::pool<Dcel::Face *> *faces);
     void deletePoint(Pointd &vertex);
-    void updateNaive(Dcel::Face *face);
 private:
     DrawableDcel* dcel;
-    std::list<Pointd> pointList;
-
+    std::vector<Pointd> pointVector;
     hashlib::dict<Pointd, hashlib::pool<Dcel::Face*>*> Fconflict;
     hashlib::dict<Dcel::Face*, hashlib::pool<Pointd>*> Pconflict;
 

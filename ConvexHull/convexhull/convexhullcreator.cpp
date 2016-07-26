@@ -22,14 +22,14 @@ void ConvexHullCreator::calculate(){
     createTetrahedron();
 
     //initialize the conflict graph
-    conflictGraph = new ConflictGraph2(dcel, pointVec);
+    conflictGraph = new ConflictGraph(dcel, pointVec);
 
     //start the incremental cycle
     //for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
     for(unsigned int i=4; i<pointVec.size();i++){
 
-        dcel->clearDebugCylinders();
-        dcel->clearDebugSpheres();
+        //dcel->clearDebugCylinders();
+        //dcel->clearDebugSpheres();
 
         hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
 
@@ -257,28 +257,84 @@ void ConvexHullCreator::createTetrahedron(){
     Dcel::HalfEdge* he1In = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2In = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he3In = this->dcel->addHalfEdge();
-    
-    he1In->setFromVertex(b);
-    he1In->setToVertex(a);
-    he1In->setNext(he3In);
-    he1In->setPrev(he2In);
-    a->incrementCardinality();
-    b->incrementCardinality();
-    
-    he2In->setFromVertex(c);
-    he2In->setToVertex(b);
-    he2In->setNext(he1In);
-    he2In->setPrev(he3In);
-    c->incrementCardinality();
-    b->incrementCardinality();
-    
-    he3In->setFromVertex(a);
-    he3In->setToVertex(c);
-    he3In->setNext(he2In);
-    he3In->setPrev(he1In);
-    a->incrementCardinality();
-    c->incrementCardinality();
-    
+
+    //check the orientation of the 4th point wrt the others
+    //to determine the base face orientation
+
+    Eigen::Matrix4d matrix;
+
+    matrix(0, 0) = a->getCoordinate().x();
+    matrix(0, 1) = a->getCoordinate().y();
+    matrix(0, 2) = a->getCoordinate().z();
+    matrix(0, 3) = 1;
+
+    matrix(1, 0) = b->getCoordinate().x();
+    matrix(1, 1) = b->getCoordinate().y();
+    matrix(1, 2) = b->getCoordinate().z();
+    matrix(1, 3) = 1;
+
+    matrix(2, 0) = c->getCoordinate().x();
+    matrix(2, 1) = c->getCoordinate().y();
+    matrix(2, 2) = c->getCoordinate().z();
+    matrix(2, 3) = 1;
+
+    matrix(3, 0) = d->getCoordinate().x();
+    matrix(3, 1) = d->getCoordinate().y();
+    matrix(3, 2) = d->getCoordinate().z();
+    matrix(3, 3) = 1;
+
+    double det = matrix.determinant();
+
+    //se il determinante è negativo il punto è nello stesso semispazio della normale della faccia
+    //la normale punta all'esterno, quindi il punto "vede" la faccia
+    if (det < -std::numeric_limits<double>::epsilon()){
+
+        he1In->setFromVertex(b);
+        he1In->setToVertex(a);
+        he1In->setNext(he3In);
+        he1In->setPrev(he2In);
+        a->incrementCardinality();
+        b->incrementCardinality();
+
+        he2In->setFromVertex(c);
+        he2In->setToVertex(b);
+        he2In->setNext(he1In);
+        he2In->setPrev(he3In);
+        c->incrementCardinality();
+        b->incrementCardinality();
+
+        he3In->setFromVertex(a);
+        he3In->setToVertex(c);
+        he3In->setNext(he2In);
+        he3In->setPrev(he1In);
+        a->incrementCardinality();
+        c->incrementCardinality();
+
+    } else {
+
+        he1In->setFromVertex(a);
+        he1In->setToVertex(b);
+        he1In->setNext(he2In);
+        he1In->setPrev(he3In);
+        a->incrementCardinality();
+        b->incrementCardinality();
+
+        he2In->setFromVertex(b);
+        he2In->setToVertex(c);
+        he2In->setNext(he3In);
+        he2In->setPrev(he1In);
+        c->incrementCardinality();
+        b->incrementCardinality();
+
+        he3In->setFromVertex(c);
+        he3In->setToVertex(a);
+        he3In->setNext(he1In);
+        he3In->setPrev(he2In);
+        a->incrementCardinality();
+        c->incrementCardinality();
+
+    }
+
     Dcel::Face* face1 = this->dcel->addFace();
     face1->setOuterHalfEdge(he1In);
     he1In->setFace(face1);

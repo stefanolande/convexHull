@@ -1,22 +1,16 @@
-#include "conflictgraph2.h"
+#include "conflictgraph.h"
 
 /**
  * @brief ConflictGraph::ConflictGraph
  * Performs the conflict graph initialization on the input dcel
  */
-ConflictGraph2::ConflictGraph2(DrawableDcel *dcelP, const std::vector<Pointd> &vertexVecP)
+ConflictGraph::ConflictGraph(DrawableDcel *dcelP, const std::vector<Pointd> &vertexVecP)
 {
     this->dcel = dcelP;
-
-    //copy the
-    std::vector<Pointd>::const_iterator it = vertexVecP.begin();
-    it += 3;
-    for(; it != vertexVecP.end(); ++it){
-        this->pointList.push_back(*it);
-    }
+    this->pointVector = vertexVecP;
 
     //check the visibility of each face from each point
-    for(std::list<Pointd>::iterator pit = pointList.begin(); pit != pointList.end(); ++pit){
+    for(std::vector<Pointd>::iterator pit = pointVector.begin(); pit != pointVector.end(); ++pit){
 
         for(Dcel::FaceIterator fit = dcel->faceBegin(); fit != dcel->faceEnd(); ++fit){
 
@@ -30,7 +24,7 @@ ConflictGraph2::ConflictGraph2(DrawableDcel *dcelP, const std::vector<Pointd> &v
 
 }
 
-hashlib::pool<Dcel::Face *> *ConflictGraph2::getVisibleFaces(Pointd &vertex)
+hashlib::pool<Dcel::Face *> *ConflictGraph::getVisibleFaces(Pointd &vertex)
 {
     hashlib::pool<Dcel::Face *> *faces =  this->Fconflict[vertex];
 
@@ -40,10 +34,9 @@ hashlib::pool<Dcel::Face *> *ConflictGraph2::getVisibleFaces(Pointd &vertex)
     }
 
     return new hashlib::pool<Dcel::Face *>(*faces);
-    //return faces;
 }
 
-hashlib::pool<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
+hashlib::pool<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
 {
     hashlib::pool<Pointd> *vertices = this->Pconflict[face];
 
@@ -53,11 +46,10 @@ hashlib::pool<Pointd> *ConflictGraph2::getVisibleVertices(Dcel::Face *face)
     }
 
     return new hashlib::pool<Pointd>(*vertices);
-    //return vertices;
 }
 
 
-bool ConflictGraph2::checkVisibility(Dcel::Face* face, const Pointd &vertex){
+bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     Eigen::Matrix4d matrix;
     //add the coordinates of the three vertices to the matrix
     int j=0;
@@ -82,7 +74,7 @@ bool ConflictGraph2::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     return (det < -std::numeric_limits<double>::epsilon());
 }
 
-void ConflictGraph2::insertInFconflict(Pointd point, Dcel::Face *face)
+void ConflictGraph::insertInFconflict(Pointd point, Dcel::Face *face)
 {
 
     if(this->Fconflict[point] == nullptr){
@@ -92,7 +84,7 @@ void ConflictGraph2::insertInFconflict(Pointd point, Dcel::Face *face)
     this->Fconflict[point]->insert(face);
 }
 
-void ConflictGraph2::insertInPconflict(Pointd point, Dcel::Face *face)
+void ConflictGraph::insertInPconflict(Pointd point, Dcel::Face *face)
 {
     if(this->Pconflict[face] == nullptr){
         this->Pconflict[face] = new hashlib::pool<Pointd>;
@@ -101,9 +93,8 @@ void ConflictGraph2::insertInPconflict(Pointd point, Dcel::Face *face)
     this->Pconflict[face]->insert(point);
 }
 
-void ConflictGraph2::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd>* candidateVertices)
+void ConflictGraph::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd>* candidateVertices)
 {
-    //int count=0;
     for(hashlib::pool<Pointd>::iterator pit = candidateVertices->begin(); pit != candidateVertices->end(); ++pit){
         if(checkVisibility(face, *pit)){
             insertInFconflict(*pit, face);
@@ -112,18 +103,7 @@ void ConflictGraph2::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd>
     }
 }
 
-void ConflictGraph2::updateNaive(Dcel::Face* face){
-    for(std::list<Pointd>::iterator pit = pointList.begin(); pit != pointList.end(); ++pit){
-
-        if(checkVisibility(face, *pit)){
-            insertInFconflict(*pit, face);
-            insertInPconflict(*pit, face);
-        }
-    }
-
-}
-
-void ConflictGraph2::deleteFaces(hashlib::pool<Dcel::Face *> *faces)
+void ConflictGraph::deleteFaces(hashlib::pool<Dcel::Face *> *faces)
 {   
     hashlib::pool<Dcel::Face*>::const_iterator fit;
     for(fit = faces->begin(); fit != faces->end(); ++fit){
@@ -146,7 +126,7 @@ void ConflictGraph2::deleteFaces(hashlib::pool<Dcel::Face *> *faces)
 }
 
 
-void ConflictGraph2::deletePoint(Pointd &vertex)
+void ConflictGraph::deletePoint(Pointd &vertex)
 {
     hashlib::pool<Dcel::Face*> *visibleFace = this->Fconflict[vertex];
 
@@ -162,8 +142,6 @@ void ConflictGraph2::deletePoint(Pointd &vertex)
             }
         }
     }
-
-    pointList.remove(vertex);
 }
 
 
