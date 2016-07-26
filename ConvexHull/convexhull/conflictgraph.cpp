@@ -7,53 +7,45 @@
 ConflictGraph::ConflictGraph(DrawableDcel *dcelP, const std::vector<Pointd> &vertexVecP)
 {
     this->dcel = dcelP;
-
-    //copy the
-    std::vector<Pointd>::const_iterator it = vertexVecP.begin();
-    it += 3;
-    for(; it != vertexVecP.end(); ++it){
-        this->pointList.push_back(*it);
-    }
+    this->pointVector = vertexVecP;
 
     //check the visibility of each face from each point
-    for(std::list<Pointd>::iterator it = pointList.begin(); it != pointList.end(); ++it){
+    for(std::vector<Pointd>::iterator pit = pointVector.begin(); pit != pointVector.end(); ++pit){
 
         for(Dcel::FaceIterator fit = dcel->faceBegin(); fit != dcel->faceEnd(); ++fit){
 
-            if(checkVisibility(*fit, *it)){
-                this->conflict.insert(std::make_pair(*it, *fit));
+            if(checkVisibility(*fit, *pit)){
+                insertInFconflict(*pit, *fit);
+                insertInPconflict(*pit, *fit);
             }
             
-            
         }
     }
 
 }
 
-std::unordered_set<Dcel::Face *>* ConflictGraph::getVisibleFaces(Pointd &vertex)
+hashlib::pool<Dcel::Face *> *ConflictGraph::getVisibleFaces(Pointd &vertex)
 {
-    std::unordered_set<Dcel::Face *>* result = new std::unordered_set<Dcel::Face *>();
+    hashlib::pool<Dcel::Face *> *faces =  this->Fconflict[vertex];
 
-    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
-        if(vertex == (*it).first){
-            result->insert((*it).second);
-        }
+    if(faces == nullptr){
+        faces = new hashlib::pool<Dcel::Face *>;
+        this->Fconflict[vertex] = faces;
     }
 
-    return result;
+    return new hashlib::pool<Dcel::Face *>(*faces);
 }
 
-std::unordered_set<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
+hashlib::pool<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
 {
-    std::unordered_set<Pointd >* result = new std::unordered_set<Pointd >();
+    hashlib::pool<Pointd> *vertices = this->Pconflict[face];
 
-    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator it = this->conflict.begin(); it != this->conflict.end(); ++it){
-        if(face == (*it).second){
-            result->insert((*it).first);
-        }
+    if(vertices == nullptr){
+        vertices = new hashlib::pool<Pointd>;
+        this->Pconflict[face] = vertices;
     }
 
-    return result;
+    return new hashlib::pool<Pointd>(*vertices);
 }
 
 
@@ -82,49 +74,74 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     return (det < -std::numeric_limits<double>::epsilon());
 }
 
-void ConflictGraph::updateConflictGraph(Dcel::Face *face, std::unordered_set<Pointd>* candidateVertices)
-{
-    //int count=0;
-    for(std::unordered_set<Pointd>::iterator it = candidateVertices->begin(); it != candidateVertices->end(); ++it){
-        if(checkVisibility(face, *it)){
-            this->conflict.insert(std::make_pair(*it, face));
-        }
-    }
-}
-
-void ConflictGraph::updateNaive(Dcel::Face* face){
-    for(std::list<Pointd>::iterator it = pointList.begin(); it != pointList.end(); ++it){
-
-        if(checkVisibility(face, *it)){
-            this->conflict.insert(std::make_pair(*it, face));
-        }
-    }
-
-}
-
-void ConflictGraph::deleteFaces(std::unordered_set<Dcel::Face *> *faces)
+void ConflictGraph::insertInFconflict(Pointd point, Dcel::Face *face)
 {
 
-    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
-        if(faces->count(cit->second) == 1){
-            this->conflict.erase(cit++);
-        } else {
-            ++cit;
+    if(this->Fconflict[point] == nullptr){
+        this->Fconflict[point] = new hashlib::pool<Dcel::Face*>;
+    }
+
+    this->Fconflict[point]->insert(face);
+}
+
+void ConflictGraph::insertInPconflict(Pointd point, Dcel::Face *face)
+{
+    if(this->Pconflict[face] == nullptr){
+        this->Pconflict[face] = new hashlib::pool<Pointd>;
+    }
+
+    this->Pconflict[face]->insert(point);
+}
+
+void ConflictGraph::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd>* candidateVertices)
+{
+    for(hashlib::pool<Pointd>::iterator pit = candidateVertices->begin(); pit != candidateVertices->end(); ++pit){
+        if(checkVisibility(face, *pit)){
+            insertInFconflict(*pit, face);
+            insertInPconflict(*pit, face);
         }
     }
 }
+
+void ConflictGraph::deleteFaces(hashlib::pool<Dcel::Face *> *faces)
+{   
+    hashlib::pool<Dcel::Face*>::const_iterator fit;
+    for(fit = faces->begin(); fit != faces->end(); ++fit){
+
+        hashlib::pool<Pointd> *visiblePoints = this->Pconflict[*fit];
+
+        if(visiblePoints != nullptr){
+            this->Pconflict.erase(*fit);
+
+            hashlib::pool<Pointd>::iterator pit;
+            for(pit = visiblePoints->begin(); pit != visiblePoints->end(); ++pit){
+
+                auto associatedSet = this->Fconflict[*pit];
+                if(associatedSet != nullptr){
+                    associatedSet->erase(*fit);
+                }
+            }
+        }
+    }
+}
+
 
 void ConflictGraph::deletePoint(Pointd &vertex)
 {
-    for(std::unordered_set<std::pair<Pointd, Dcel::Face*>>::iterator cit = this->conflict.begin(); cit != this->conflict.end();){
-        if((*cit).first == vertex){
-            this->conflict.erase(cit++);
-        } else {
-            ++cit;
+    hashlib::pool<Dcel::Face*> *visibleFace = this->Fconflict[vertex];
+
+    if(visibleFace != nullptr){
+        this->Fconflict.erase(vertex);
+
+        hashlib::pool<Dcel::Face *>::iterator fit;
+        for(fit = visibleFace->begin(); fit != visibleFace->end(); ++fit){
+
+            auto associatedSet = this->Pconflict[*fit];
+            if(associatedSet != nullptr){
+                associatedSet->erase(vertex);
+            }
         }
     }
-
-    pointList.remove(vertex);
 }
 
 

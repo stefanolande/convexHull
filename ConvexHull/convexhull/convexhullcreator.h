@@ -10,7 +10,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <random>
-#include "conflictgraph2.h"
+#include "conflictgraph.h"
+
 
 class ConvexHullCreator {
 public:
@@ -19,7 +20,7 @@ public:
 private:
     std::vector<Pointd> pointVec;
     DrawableDcel *dcel;
-    ConflictGraph2 *conflictGraph;
+    ConflictGraph *conflictGraph;
 
     void getVertices();
     void findValidPermutation();
@@ -27,10 +28,9 @@ private:
     Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
     void setTwins(std::vector<Dcel::Face *> &faceList);
     Dcel::Face *addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
-    void removeVisibleFaces(std::unordered_set<Dcel::Face *> &faceList);
-    std::list<Dcel::HalfEdge*> getHorizon(std::unordered_set<Dcel::Face *> *visibleFaces);   
-    std::unordered_map<Dcel::HalfEdge *, std::unordered_set<Pointd> *> getCandidateVertexMap(std::list<Dcel::HalfEdge *> horizon);
-    void checkSanity();
+    void removeVisibleFaces(hashlib::pool<Dcel::Face *> *faceList);
+    std::list<Dcel::HalfEdge*> getHorizon(hashlib::pool<Dcel::Face *> *visibleFaces);
+    hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd> *> getCandidateVertexMap(std::list<Dcel::HalfEdge *> horizon);
 };
 
 #endif

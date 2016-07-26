@@ -20,19 +20,18 @@ void ConvexHullCreator::calculate(){
     
     //create the inital tetrahedron
     createTetrahedron();
-    //checkSanity();
 
     //initialize the conflict graph
-    conflictGraph = new ConflictGraph2(dcel, pointVec);
+    conflictGraph = new ConflictGraph(dcel, pointVec);
 
     //start the incremental cycle
     //for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
     for(unsigned int i=4; i<pointVec.size();i++){
 
-        dcel->clearDebugCylinders();
-        dcel->clearDebugSpheres();
+        //dcel->clearDebugCylinders();
+        //dcel->clearDebugSpheres();
 
-        std::unordered_set<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
+        hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
 
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
@@ -43,13 +42,15 @@ void ConvexHullCreator::calculate(){
 
             count++;
 
+            //checkSanity();
+
             //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
-            std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
+            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
-            conflictGraph->deleteFaces(*visibleFaces);
-            removeVisibleFaces(*visibleFaces);
+            conflictGraph->deleteFaces(visibleFaces);
+            removeVisibleFaces(visibleFaces);
 
             //std::cout << "#HE on horizon " << horizon.size() << std::endl;
 
@@ -84,16 +85,16 @@ void ConvexHullCreator::calculate(){
     }
 }
 
-std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
+hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
 
-    std::unordered_map<Dcel::HalfEdge *, std::unordered_set<Pointd>*> result;
+    hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd>*> result;
 
     for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
         Dcel::HalfEdge *halfEdge = *it;
         Dcel::Face *face1 = halfEdge->getFace();
         Dcel::Face *face2 = halfEdge->getTwin()->getFace();
 
-        std::unordered_set<Pointd> *conflict1, *conflict2;
+        hashlib::pool<Pointd> *conflict1, *conflict2;
         conflict1 = conflictGraph->getVisibleVertices(face1);
         conflict2 = conflictGraph->getVisibleVertices(face2);
 
@@ -107,14 +108,14 @@ std::unordered_map<Dcel::HalfEdge*, std::unordered_set<Pointd>*> ConvexHullCreat
 
 }
 
-std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel::Face*>* visibleFaces){
+std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Face*>* visibleFaces){
 
     std::list<Dcel::HalfEdge*> horizon;
     Dcel::HalfEdge* first;
 
     //cerco un edge dell'orizzonte
     bool found = false;
-    std::unordered_set<Dcel::Face*>::iterator fit;
+    hashlib::pool<Dcel::Face*>::iterator fit;
     for(fit = visibleFaces->begin(); fit != visibleFaces->end() && !found; ++fit){
 
         Dcel::Face* visibleFace = *fit;
@@ -135,35 +136,39 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(std::unordered_set<Dcel
         }
     }
 
-    //prendo il resto dell'orizzonte
-    Dcel::HalfEdge *current, *next, *twinOfNext;
-    Dcel::Face *incidentFace;
+    if(first != nullptr){
+        //prendo il resto dell'orizzonte
+        Dcel::HalfEdge *current, *next, *twinOfNext;
+        Dcel::Face *incidentFace;
 
-    current = first;
-    horizon.push_front(first);
+        current = first;
+        horizon.push_front(first);
 
-    do{
-        next = current->getNext();
-        twinOfNext = next->getTwin();
-        incidentFace = twinOfNext->getFace();
+        do{
+            next = current->getNext();
+            twinOfNext = next->getTwin();
+            incidentFace = twinOfNext->getFace();
 
-        if(visibleFaces->count(incidentFace) == 1){
-            horizon.push_back(next);
-            current = next;
-        } else {
-            current = twinOfNext;
-        }
-    } while (first != current && first != current->getNext());
+            if(visibleFaces->count(incidentFace) == 1){
+                horizon.push_back(next);
+                current = next;
+            } else {
+                current = twinOfNext;
+            }
+        } while (first != current && first != current->getNext());
+    } else {
+        throw std::runtime_error("Error in visible faces!");
+    }
 
     return horizon;
 
 }
 
-void ConvexHullCreator::removeVisibleFaces(std::unordered_set<Dcel::Face*> &faceList){
+void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList){
 
     std::list<Dcel::Vertex*> vertexToRemove;
 
-    for(std::unordered_set<Dcel::Face*>::iterator it = faceList.begin(); it != faceList.end(); ++it){
+    for(hashlib::pool<Dcel::Face*>::iterator it = faceList->begin(); it != faceList->end(); ++it){
 
         Dcel::Face* face = *it;
 
@@ -252,28 +257,84 @@ void ConvexHullCreator::createTetrahedron(){
     Dcel::HalfEdge* he1In = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2In = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he3In = this->dcel->addHalfEdge();
-    
-    he1In->setFromVertex(b);
-    he1In->setToVertex(a);
-    he1In->setNext(he3In);
-    he1In->setPrev(he2In);
-    a->incrementCardinality();
-    b->incrementCardinality();
-    
-    he2In->setFromVertex(c);
-    he2In->setToVertex(b);
-    he2In->setNext(he1In);
-    he2In->setPrev(he3In);
-    c->incrementCardinality();
-    b->incrementCardinality();
-    
-    he3In->setFromVertex(a);
-    he3In->setToVertex(c);
-    he3In->setNext(he2In);
-    he3In->setPrev(he1In);
-    a->incrementCardinality();
-    c->incrementCardinality();
-    
+
+    //check the orientation of the 4th point wrt the others
+    //to determine the base face orientation
+
+    Eigen::Matrix4d matrix;
+
+    matrix(0, 0) = a->getCoordinate().x();
+    matrix(0, 1) = a->getCoordinate().y();
+    matrix(0, 2) = a->getCoordinate().z();
+    matrix(0, 3) = 1;
+
+    matrix(1, 0) = b->getCoordinate().x();
+    matrix(1, 1) = b->getCoordinate().y();
+    matrix(1, 2) = b->getCoordinate().z();
+    matrix(1, 3) = 1;
+
+    matrix(2, 0) = c->getCoordinate().x();
+    matrix(2, 1) = c->getCoordinate().y();
+    matrix(2, 2) = c->getCoordinate().z();
+    matrix(2, 3) = 1;
+
+    matrix(3, 0) = d->getCoordinate().x();
+    matrix(3, 1) = d->getCoordinate().y();
+    matrix(3, 2) = d->getCoordinate().z();
+    matrix(3, 3) = 1;
+
+    double det = matrix.determinant();
+
+    //se il determinante è negativo il punto è nello stesso semispazio della normale della faccia
+    //la normale punta all'esterno, quindi il punto "vede" la faccia
+    if (det < -std::numeric_limits<double>::epsilon()){
+
+        he1In->setFromVertex(b);
+        he1In->setToVertex(a);
+        he1In->setNext(he3In);
+        he1In->setPrev(he2In);
+        a->incrementCardinality();
+        b->incrementCardinality();
+
+        he2In->setFromVertex(c);
+        he2In->setToVertex(b);
+        he2In->setNext(he1In);
+        he2In->setPrev(he3In);
+        c->incrementCardinality();
+        b->incrementCardinality();
+
+        he3In->setFromVertex(a);
+        he3In->setToVertex(c);
+        he3In->setNext(he2In);
+        he3In->setPrev(he1In);
+        a->incrementCardinality();
+        c->incrementCardinality();
+
+    } else {
+
+        he1In->setFromVertex(a);
+        he1In->setToVertex(b);
+        he1In->setNext(he2In);
+        he1In->setPrev(he3In);
+        a->incrementCardinality();
+        b->incrementCardinality();
+
+        he2In->setFromVertex(b);
+        he2In->setToVertex(c);
+        he2In->setNext(he3In);
+        he2In->setPrev(he1In);
+        c->incrementCardinality();
+        b->incrementCardinality();
+
+        he3In->setFromVertex(c);
+        he3In->setToVertex(a);
+        he3In->setNext(he1In);
+        he3In->setPrev(he2In);
+        a->incrementCardinality();
+        c->incrementCardinality();
+
+    }
+
     Dcel::Face* face1 = this->dcel->addFace();
     face1->setOuterHalfEdge(he1In);
     he1In->setFace(face1);
@@ -436,15 +497,5 @@ void ConvexHullCreator::getVertices(){
     for(vit = dcel->vertexBegin(); vit != dcel->vertexEnd(); ++vit){
         this->pointVec[i] = (*vit)->getCoordinate();
         i++;
-    }
-}
-
-void ConvexHullCreator::checkSanity(){
-    for (Dcel::HalfEdgeIterator heit = dcel->halfEdgeBegin(); heit != dcel->halfEdgeEnd(); ++heit){
-        Dcel::HalfEdge* he = *heit;
-
-        if(he->getTwin() == nullptr){
-            std::cout << "TWIN NULLO SU FACCIA " << he->getFace()->getId() << std::endl;
-        }
     }
 }

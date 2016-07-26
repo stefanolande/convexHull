@@ -53,8 +53,8 @@ HEADERS += \
     lib/timer.h \
     convexhull/convexhullcreator.h \
     convexhull/conflictgraph.h \
-    convexhull/conflictgraph2.h \
-    convexhull/hashes.h
+    convexhull/hashes.h \
+    convexhull/hashlib.h
 
 SOURCES += \
     GUI/managers/dcelmanager.cpp \
@@ -70,8 +70,7 @@ SOURCES += \
     common.cpp \
     main.cpp \
     convexhull/convexhullcreator.cpp \
-    convexhull/conflictgraph.cpp \
-    convexhull/conflictgraph2.cpp
+    convexhull/conflictgraph.cpp
 
 FORMS += \
     GUI/managers/dcelmanager.ui \
