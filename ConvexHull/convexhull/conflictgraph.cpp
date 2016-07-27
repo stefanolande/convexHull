@@ -48,15 +48,33 @@ hashlib::pool<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
     return new hashlib::pool<Pointd>(*vertices);
 }
 
-
+/**
+ * @brief ConflictGraph::checkVisibility
+ * Determine if the vertex sees the face in input
+ * @param face
+ * @param vertex
+ * @return
+ */
 bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
+
+    //get a vertex from the face
     Dcel::Vertex *v = *(face->incidentVertexBegin());
 
+    //(vertex - v) is a vector joining the face and the vertex to check
+    //if the dot product betweet it and the face normal is positive,
+    //the vector lies in the same semi-space of the normal, implying that the vertex sees the face
     return ((vertex - v->getCoordinate()).dot(getFaceNormalDirection(face)) > 0);
 }
 
+/**
+ * @brief ConflictGraph::getFaceNormalDirection
+ * Return a vector with the same direction (possibly different modulus)
+ * of the normal vector of the face
+ * @param face
+ * @return
+ */
 Pointd ConflictGraph::getFaceNormalDirection(Dcel::Face *face){
-    Pointd vertices[3], vec1, vec2, norm;
+    Pointd vertices[3], vec1, vec2, dir;
 
     int i=0;
     for(Dcel::Face::IncidentVertexIterator vit = face->incidentVertexBegin(); vit != face->incidentVertexEnd(); ++vit){
@@ -66,9 +84,9 @@ Pointd ConflictGraph::getFaceNormalDirection(Dcel::Face *face){
 
     vec1 = vertices[1] - vertices[0];
     vec2 = vertices[2] - vertices[0];
-    norm = vec1.cross(vec2);
+    dir = vec1.cross(vec2);
 
-    return norm;
+    return dir;
 
 }
 
