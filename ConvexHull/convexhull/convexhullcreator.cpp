@@ -111,7 +111,7 @@ hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCan
 std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Face*>* visibleFaces){
 
     std::list<Dcel::HalfEdge*> horizon;
-    Dcel::HalfEdge* first;
+    Dcel::HalfEdge* first = nullptr;
 
     //cerco un edge dell'orizzonte
     bool found = false;
@@ -282,52 +282,44 @@ void ConvexHullCreator::createTetrahedron(){
     //se il determinante è negativo il punto è nello stesso semispazio della normale della faccia
     //la normale punta all'esterno, quindi il punto "vede" la faccia
     if (det < -std::numeric_limits<double>::epsilon()){
-
         he1In->setFromVertex(b);
         he1In->setToVertex(a);
         he1In->setNext(he3In);
         he1In->setPrev(he2In);
-        a->incrementCardinality();
-        b->incrementCardinality();
 
         he2In->setFromVertex(c);
         he2In->setToVertex(b);
         he2In->setNext(he1In);
         he2In->setPrev(he3In);
-        c->incrementCardinality();
-        b->incrementCardinality();
 
         he3In->setFromVertex(a);
         he3In->setToVertex(c);
         he3In->setNext(he2In);
         he3In->setPrev(he1In);
-        a->incrementCardinality();
-        c->incrementCardinality();
 
     } else {
-
         he1In->setFromVertex(a);
         he1In->setToVertex(b);
         he1In->setNext(he2In);
         he1In->setPrev(he3In);
-        a->incrementCardinality();
-        b->incrementCardinality();
 
         he2In->setFromVertex(b);
         he2In->setToVertex(c);
         he2In->setNext(he3In);
         he2In->setPrev(he1In);
-        c->incrementCardinality();
-        b->incrementCardinality();
 
         he3In->setFromVertex(c);
         he3In->setToVertex(a);
         he3In->setNext(he1In);
         he3In->setPrev(he2In);
-        a->incrementCardinality();
-        c->incrementCardinality();
-
     }
+
+    a->incrementCardinality();
+    b->incrementCardinality();
+    c->incrementCardinality();
+    b->incrementCardinality();
+    a->incrementCardinality();
+    c->incrementCardinality();
 
     Dcel::Face* face1 = this->dcel->addFace();
     face1->setOuterHalfEdge(he1In);

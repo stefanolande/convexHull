@@ -28,6 +28,7 @@ private:
     bool checkVisibility(Dcel::Face* face, const Pointd &vertex);
     void insertInFconflict(Pointd point, Dcel::Face *face);
     void insertInPconflict(Pointd point, Dcel::Face *face);
+    Pointd getFaceNormalDirection(Dcel::Face *face);
 };
 
 #endif // CONFLICTGRAPH_H

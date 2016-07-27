@@ -50,28 +50,26 @@ hashlib::pool<Pointd> *ConflictGraph::getVisibleVertices(Dcel::Face *face)
 
 
 bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
-    Eigen::Matrix4d matrix;
-    //add the coordinates of the three vertices to the matrix
-    int j=0;
+    Dcel::Vertex *v = *(face->incidentVertexBegin());
+
+    return ((vertex - v->getCoordinate()).dot(getFaceNormalDirection(face)) > 0);
+}
+
+Pointd ConflictGraph::getFaceNormalDirection(Dcel::Face *face){
+    Pointd vertices[3], vec1, vec2, norm;
+
+    int i=0;
     for(Dcel::Face::IncidentVertexIterator vit = face->incidentVertexBegin(); vit != face->incidentVertexEnd(); ++vit){
-        Dcel::Vertex* v = *vit;
-        matrix(j, 0) = v->getCoordinate().x();
-        matrix(j, 1) = v->getCoordinate().y();
-        matrix(j, 2) = v->getCoordinate().z();
-        matrix(j, 3) = 1;
-        j++;
+        vertices[i] = (*vit)->getCoordinate();
+        i++;
     }
 
-    matrix(3, 0) = vertex.x();
-    matrix(3, 1) = vertex.y();
-    matrix(3, 2) = vertex.z();
-    matrix(3, 3) = 1;
+    vec1 = vertices[1] - vertices[0];
+    vec2 = vertices[2] - vertices[0];
+    norm = vec1.cross(vec2);
 
-    double det = matrix.determinant();
+    return norm;
 
-    //se il determinante è negativo il punto è nello stesso semispazio della normale della faccia
-    //la normale punta all'esterno, quindi il punto "vede" la faccia
-    return (det < -std::numeric_limits<double>::epsilon());
 }
 
 void ConflictGraph::insertInFconflict(Pointd point, Dcel::Face *face)

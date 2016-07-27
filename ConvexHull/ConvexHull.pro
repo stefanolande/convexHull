@@ -87,3 +87,6 @@ DISTFILES += \
     lib/dcel_doxygen_config_eng \
     lib/dcel_doxygen_config_it \
     contributors.txt
+
+QMAKE_CXXFLAGS_DEBUG *= -pg
+QMAKE_LFLAGS_DEBUG *= -pg

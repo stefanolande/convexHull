@@ -1,6 +1,8 @@
 #ifndef POINTD_HASH_H
 #define POINTD_HASH_H
 
+#include <boost/functional/hash.hpp>
+
 namespace std {
 template<>
 class hash<Pointd> {
@@ -9,10 +11,15 @@ public:
     {
         using std::size_t;
         using std::hash;
+        using boost::hash_combine;
 
-        return ((hash<double>()(k.x())
-                 ^ (hash<double>()(k.y()) << 1)) >> 1)
-                ^ (hash<double>()(k.z()) << 1);
+        size_t seed = 0;
+
+        hash_combine(seed, k.x());
+        hash_combine(seed, k.y());
+        hash_combine(seed, k.z());
+
+        return seed;
     }
 };
 
@@ -25,7 +32,7 @@ public:
         using std::hash;
 
         return (hash<Pointd>()(k.first)
-                 ^ (hash<Dcel::Face*>()(k.second) << 1));
+                ^ (hash<Dcel::Face*>()(k.second) << 1));
     }
 };
 }
