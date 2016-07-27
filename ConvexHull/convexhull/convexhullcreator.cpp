@@ -166,8 +166,6 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Fac
 
 void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList){
 
-    std::list<Dcel::Vertex*> vertexToRemove;
-
     for(hashlib::pool<Dcel::Face*>::iterator it = faceList->begin(); it != faceList->end(); ++it){
 
         Dcel::Face* face = *it;
@@ -184,19 +182,15 @@ void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList)
             end->decrementCardinality();
 
             if(start->getCardinality() == 0){
-                vertexToRemove.push_front(start);
+                this->dcel->deleteVertex(start);
             }
             if(end->getCardinality() == 0){
-                vertexToRemove.push_front(end);
+                this->dcel->deleteVertex(end);
             }
         }
 
 
         this->dcel->deleteFace(face);
-    }
-
-    for(std::list<Dcel::Vertex*>::iterator it = vertexToRemove.begin(); it != vertexToRemove.end(); ++it){
-        this->dcel->deleteVertex(*it);
     }
 }
 
