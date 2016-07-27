@@ -257,25 +257,12 @@ void ConvexHullCreator::createTetrahedron(){
 
     Eigen::Matrix4d matrix;
 
-    matrix(0, 0) = a->getCoordinate().x();
-    matrix(0, 1) = a->getCoordinate().y();
-    matrix(0, 2) = a->getCoordinate().z();
-    matrix(0, 3) = 1;
-
-    matrix(1, 0) = b->getCoordinate().x();
-    matrix(1, 1) = b->getCoordinate().y();
-    matrix(1, 2) = b->getCoordinate().z();
-    matrix(1, 3) = 1;
-
-    matrix(2, 0) = c->getCoordinate().x();
-    matrix(2, 1) = c->getCoordinate().y();
-    matrix(2, 2) = c->getCoordinate().z();
-    matrix(2, 3) = 1;
-
-    matrix(3, 0) = d->getCoordinate().x();
-    matrix(3, 1) = d->getCoordinate().y();
-    matrix(3, 2) = d->getCoordinate().z();
-    matrix(3, 3) = 1;
+    for(unsigned int i=0; i<4; i++){
+        matrix(i, 0) = this->pointVec[i].x();
+        matrix(i, 1) = this->pointVec[i].y();
+        matrix(i, 2) = this->pointVec[i].z();
+        matrix(i, 3) = 1;
+    }
 
     double det = matrix.determinant();
 

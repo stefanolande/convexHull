@@ -63,7 +63,7 @@ bool ConflictGraph::checkVisibility(Dcel::Face* face, const Pointd &vertex){
     //(vertex - v) is a vector joining the face and the vertex to check
     //if the dot product betweet it and the face normal is positive,
     //the vector lies in the same semi-space of the normal, implying that the vertex sees the face
-    return ((vertex - v->getCoordinate()).dot(getFaceNormalDirection(face)) > 0);
+    return ((vertex - v->getCoordinate()).dot(getFaceNormalDirection(face)) > std::numeric_limits<double>::epsilon());
 }
 
 /**
