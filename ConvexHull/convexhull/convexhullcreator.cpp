@@ -301,12 +301,9 @@ void ConvexHullCreator::createTetrahedron(){
         he3In->setPrev(he2In);
     }
 
-    a->incrementCardinality();
-    b->incrementCardinality();
-    c->incrementCardinality();
-    b->incrementCardinality();
-    a->incrementCardinality();
-    c->incrementCardinality();
+    a->setCardinality(2);
+    b->setCardinality(2);
+    c->setCardinality(2);
 
     Dcel::Face* face1 = this->dcel->addFace();
     face1->setOuterHalfEdge(he1In);
