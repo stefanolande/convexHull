@@ -11,12 +11,15 @@
 #include <unordered_map>
 #include <random>
 #include "conflictgraph.h"
+#include "GUI/mainwindow.h"
+
 
 
 class ConvexHullCreator {
 public:
     ConvexHullCreator(DrawableDcel* dcel);
     void calculate();
+    void calculate(MainWindow *mainWindow);
 private:
     std::vector<Pointd> pointVec;
     DrawableDcel *dcel;

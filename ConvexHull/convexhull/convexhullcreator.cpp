@@ -6,10 +6,7 @@ ConvexHullCreator::ConvexHullCreator(DrawableDcel* dcel){
 }
 
 
-void ConvexHullCreator::calculate(){
-
-    int count = 0;
-    
+void ConvexHullCreator::calculate(){  
     //get the vertices list from the dcel
     getVertices();
     
@@ -25,34 +22,20 @@ void ConvexHullCreator::calculate(){
     conflictGraph = new ConflictGraph(dcel, pointVec);
 
     //start the incremental cycle
-    //for(std::vector<Dcel::Vertex*>::iterator it = vertexVec.begin(); it != vertexVec.end(); ++it){
     for(unsigned int i=4; i<pointVec.size();i++){
-
-        //dcel->clearDebugCylinders();
-        //dcel->clearDebugSpheres();
-
         hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
 
         //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
 
             //insert p_r in the DCEL
-            //Dcel::Vertex* newVertex = dcel->addVertex(**it);
             Dcel::Vertex* newVertex = dcel->addVertex(pointVec[i]);
-
-            count++;
-
-            //checkSanity();
-
-            //std::cout << "Facce visibili: " << visibleFaces->size() << std::endl;
 
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
             hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
             conflictGraph->deleteFaces(visibleFaces);
             removeVisibleFaces(visibleFaces);
-
-            //std::cout << "#HE on horizon " << horizon.size() << std::endl;
 
             //add a new face from each vertex in the horizon to the new edge
             std::vector<Dcel::Face*> newFaces;
@@ -63,25 +46,64 @@ void ConvexHullCreator::calculate(){
                 newFaces.push_back(newFace);
 
                 conflictGraph->updateConflictGraph(newFace, candidateVertexMap[halfEdge]);
+            }
 
-                //conflictGraph->updateNaive(newFace);
-                //dcel->addDebugCylinder(halfEdge->getFromVertex()->getCoordinate(), halfEdge->getToVertex()->getCoordinate(), 0.005, QColor(255,0,0));
+            setTwins(newFaces);
+        }
+
+        conflictGraph->deletePoint(pointVec[i]);
+    }
+}
+
+void ConvexHullCreator::calculate(MainWindow* mainWindow){
+    //get the vertices list from the dcel
+    getVertices();
+
+    //clear the initial dcel
+    dcel->reset();
+
+    findValidPermutation();
+
+    //create the inital tetrahedron
+    createTetrahedron();
+
+    //initialize the conflict graph
+    conflictGraph = new ConflictGraph(dcel, pointVec);
+
+    //start the incremental cycle
+    for(unsigned int i=4; i<pointVec.size();i++){
+        hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
+
+        //if F_conflict(p_r) is not empty
+        if(visibleFaces->size() > 0){
+
+            //insert p_r in the DCEL
+            Dcel::Vertex* newVertex = dcel->addVertex(pointVec[i]);
+
+            std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
+            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
+
+            conflictGraph->deleteFaces(visibleFaces);
+            removeVisibleFaces(visibleFaces);
+
+            //add a new face from each vertex in the horizon to the new edge
+            std::vector<Dcel::Face*> newFaces;
+
+            for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
+                Dcel::HalfEdge* halfEdge = *it;
+                Dcel::Face* newFace = addFace(newVertex, halfEdge);
+                newFaces.push_back(newFace);
+
+                conflictGraph->updateConflictGraph(newFace, candidateVertexMap[halfEdge]);
             }
 
             setTwins(newFaces);
 
-            //conflictGraph = new ConflictGraph(dcel, pointVec);
-            //dcel->addDebugSphere(pointVec[i], 0.005, QColor(255,0,0));
-            count++;
-
+            this->dcel->update();
+            mainWindow->updateGlCanvas();
         }
 
         conflictGraph->deletePoint(pointVec[i]);
-
-        /*if(count > 100){
-            //return;
-        }*/
-
     }
 }
 

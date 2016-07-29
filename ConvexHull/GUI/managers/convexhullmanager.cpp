@@ -60,7 +60,13 @@ void ConvexHullManager::on_convexHullPushButton_clicked() {
              * Begin Convex Hull Algorithm  *
              ********************************/
             ConvexHullCreator chCreator(dcel);
-            chCreator.calculate();
+
+            if(ui->showPhasesCheckBox->isChecked()){
+                chCreator.calculate(mainWindow);
+            } else {
+                chCreator.calculate();
+            }
+
 
 
             /********************************
