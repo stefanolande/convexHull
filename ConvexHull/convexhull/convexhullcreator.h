@@ -25,7 +25,7 @@ private:
     void createTetrahedron();
     Dcel::Face *addFace(Dcel::Vertex* vertex, Dcel::HalfEdge* he);
     void setTwins(std::vector<Dcel::Face *> &faceList);
-    Dcel::Face *addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
+    void addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
     void removeVisibleFaces(hashlib::pool<Dcel::Face *> *faceList);
     std::list<Dcel::HalfEdge*> getHorizon(hashlib::pool<Dcel::Face *> *visibleFaces);
     hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd> *> getCandidateVerticesMap(std::list<Dcel::HalfEdge *> horizon);

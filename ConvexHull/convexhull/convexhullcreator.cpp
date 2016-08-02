@@ -391,7 +391,7 @@ void ConvexHullCreator::createTetrahedron(){
     //add new faces connecting each half edge to the fourth vertex
     addFaceForTetrahedron(d, he1In);
     addFaceForTetrahedron(d, he2In);
-    addFaceForTetrahedron(d, he3In);   
+    addFaceForTetrahedron(d, he3In);
 }
 
 /**
