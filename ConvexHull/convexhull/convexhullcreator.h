@@ -4,16 +4,11 @@
 #include <vector>
 #include "lib/dcel/drawable_dcel.h"
 #include <eigen3/Eigen/Dense>
-#include <iostream>
 #include <algorithm>
 #include <cstdlib>
-#include <unordered_set>
-#include <unordered_map>
 #include <random>
 #include "conflictgraph.h"
 #include "GUI/mainwindow.h"
-
-
 
 class ConvexHullCreator {
 public:
@@ -33,7 +28,7 @@ private:
     Dcel::Face *addFaceForTetrahedron(Dcel::Vertex *otherVertex, Dcel::HalfEdge *existingHe);
     void removeVisibleFaces(hashlib::pool<Dcel::Face *> *faceList);
     std::list<Dcel::HalfEdge*> getHorizon(hashlib::pool<Dcel::Face *> *visibleFaces);
-    hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd> *> getCandidateVertexMap(std::list<Dcel::HalfEdge *> horizon);
+    hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd> *> getCandidateVerticesMap(std::list<Dcel::HalfEdge *> horizon);
 };
 
 #endif

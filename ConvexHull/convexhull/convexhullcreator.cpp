@@ -1,13 +1,19 @@
 #include "convexhullcreator.h"
 
+/**
+ * @brief ConvexHullCreator::ConvexHullCreator Public contructor that initalizes the convex hull creator.
+ * @param dcel DCEL containing the point used to create the convex hull
+ */
 ConvexHullCreator::ConvexHullCreator(DrawableDcel* dcel){
     this->dcel = dcel;
     this->pointVec = std::vector<Pointd>(dcel->getNumberVertices());
 }
 
-
+/**
+ * @brief ConvexHullCreator::calculate Computes the convex hull, without updating the UI.
+ */
 void ConvexHullCreator::calculate(){  
-    //get the vertices list from the dcel
+
     getVertices();
     
     //clear the initial dcel
@@ -15,25 +21,28 @@ void ConvexHullCreator::calculate(){
     
     findValidPermutation();
     
-    //create the inital tetrahedron
     createTetrahedron();
 
-    //initialize the conflict graph
     conflictGraph = new ConflictGraph(dcel, pointVec);
 
     //start the incremental cycle
     for(unsigned int i=4; i<pointVec.size();i++){
+        //get the faces visibile from the new vertex
         hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
 
-        //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
 
-            //insert p_r in the DCEL
+            //insert new vertex in the DCEL
             Dcel::Vertex* newVertex = dcel->addVertex(pointVec[i]);
 
+            //compute the horizon of the visible faces
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
-            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
+            //compute the map of vertices that may be visible from the faces incident to the horizon half edges
+            //(and their twins)
+            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVerticesMap(horizon);
+
+            //remove the visible faces from the conflict graph and from the dcel
             conflictGraph->deleteFaces(visibleFaces);
             removeVisibleFaces(visibleFaces);
 
@@ -42,21 +51,31 @@ void ConvexHullCreator::calculate(){
 
             for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
                 Dcel::HalfEdge* halfEdge = *it;
+
+                //create a new face and push it in the vector of new faces
                 Dcel::Face* newFace = addFace(newVertex, halfEdge);
                 newFaces.push_back(newFace);
 
+                //update the conflict graph, checking the visibility for only the point candidate point
+                //previously saved in the map
                 conflictGraph->updateConflictGraph(newFace, candidateVertexMap[halfEdge]);
             }
 
+            //set the twins using the ordered new faces vector
             setTwins(newFaces);
         }
 
+        //finally, delete the new point from the conflict graph
         conflictGraph->deletePoint(pointVec[i]);
     }
 }
 
+/**
+ * @brief ConvexHullCreator::calculate Computes the convex hull, updating the UI at each step.
+ * @param mainWindow Window to update.
+ */
 void ConvexHullCreator::calculate(MainWindow* mainWindow){
-    //get the vertices list from the dcel
+
     getVertices();
 
     //clear the initial dcel
@@ -64,25 +83,28 @@ void ConvexHullCreator::calculate(MainWindow* mainWindow){
 
     findValidPermutation();
 
-    //create the inital tetrahedron
     createTetrahedron();
 
-    //initialize the conflict graph
     conflictGraph = new ConflictGraph(dcel, pointVec);
 
     //start the incremental cycle
     for(unsigned int i=4; i<pointVec.size();i++){
+        //get the faces visibile from the new vertex
         hashlib::pool<Dcel::Face*>* visibleFaces = conflictGraph->getVisibleFaces(pointVec[i]);
 
-        //if F_conflict(p_r) is not empty
         if(visibleFaces->size() > 0){
 
-            //insert p_r in the DCEL
+            //insert new vertex in the DCEL
             Dcel::Vertex* newVertex = dcel->addVertex(pointVec[i]);
 
+            //compute the horizon of the visible faces
             std::list<Dcel::HalfEdge*> horizon = getHorizon(visibleFaces);
-            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVertexMap(horizon);
 
+            //compute the map of vertices that may be visible from the faces incident to the horizon half edges
+            //(and their twins)
+            hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*>  candidateVertexMap = getCandidateVerticesMap(horizon);
+
+            //remove the visible faces from the conflict graph and from the dcel
             conflictGraph->deleteFaces(visibleFaces);
             removeVisibleFaces(visibleFaces);
 
@@ -91,31 +113,48 @@ void ConvexHullCreator::calculate(MainWindow* mainWindow){
 
             for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
                 Dcel::HalfEdge* halfEdge = *it;
+
+                //create a new face and push it in the vector of new faces
                 Dcel::Face* newFace = addFace(newVertex, halfEdge);
                 newFaces.push_back(newFace);
 
+                //update the conflict graph, checking the visibility for only the point candidate point
+                //previously saved in the map
                 conflictGraph->updateConflictGraph(newFace, candidateVertexMap[halfEdge]);
             }
 
+            //set the twins using the ordered new faces vector
             setTwins(newFaces);
 
+            //operations needed to render the dcel
             this->dcel->update();
             mainWindow->updateGlCanvas();
         }
 
+        //finally, delete the new point from the conflict graph
         conflictGraph->deletePoint(pointVec[i]);
     }
 }
 
-hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCandidateVertexMap(std::list<Dcel::HalfEdge*> horizon){
+/**
+ * @brief ConvexHullCreator::getCandidateVertexMap Return a map that, for each half edge in the horizon, contains a set
+ * of vertices that may be visible from a face that will be attached to the former.
+ * @param horizon set containing the half edges in the horizon
+ * @return Map associating a set of candidate visible vertices to an half edge
+ */
+hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCandidateVerticesMap(std::list<Dcel::HalfEdge*> horizon){
 
     hashlib::dict<Dcel::HalfEdge *, hashlib::pool<Pointd>*> result;
 
+    //for each half edge in the horizon
     for(std::list<Dcel::HalfEdge*>::iterator it = horizon.begin(); it != horizon.end(); ++it){
         Dcel::HalfEdge *halfEdge = *it;
+
+        //get its and its twin incident faces
         Dcel::Face *face1 = halfEdge->getFace();
         Dcel::Face *face2 = halfEdge->getTwin()->getFace();
 
+        //get the set of the vertices visible from the former faces
         hashlib::pool<Pointd> *conflict1, *conflict2;
         conflict1 = conflictGraph->getVisibleVertices(face1);
         conflict2 = conflictGraph->getVisibleVertices(face2);
@@ -123,6 +162,7 @@ hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCan
         //merge the sets
         conflict1->insert(conflict2->begin(), conflict2->end());
 
+        //associate the merged set to the horizon half edge
         result[halfEdge] = conflict1;
     }
 
@@ -130,47 +170,59 @@ hashlib::dict<Dcel::HalfEdge*, hashlib::pool<Pointd>*> ConvexHullCreator::getCan
 
 }
 
+/**
+ * @brief ConvexHullCreator::getHorizon Given a set of visible faces, returns an ordered list
+ * of half edge in the orizon
+ * @param visibleFaces set of visible faces
+ * @return ordered list of half edge
+ */
 std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Face*>* visibleFaces){
 
     std::list<Dcel::HalfEdge*> horizon;
-    Dcel::HalfEdge* first = nullptr;
+    Dcel::HalfEdge* first;
 
-    //cerco un edge dell'orizzonte
+    //first, we look for an horizon half edge to start getting the complete ordered horizon
     bool found = false;
+
     hashlib::pool<Dcel::Face*>::iterator fit;
     for(fit = visibleFaces->begin(); fit != visibleFaces->end() && !found; ++fit){
 
         Dcel::Face* visibleFace = *fit;
 
-        //remove all the half edges of the face
         Dcel::Face::IncidentHalfEdgeIterator iheit;
+
+        //we iterate on all the visible faces and stop we find the first horizon half edge
         for(iheit = visibleFace ->incidentHalfEdgeBegin(); iheit != visibleFace ->incidentHalfEdgeEnd() && !found; ++iheit){
-            Dcel::HalfEdge* heToRemove = *iheit;
+            Dcel::HalfEdge* visibleHe = *iheit;
 
 
-            if(heToRemove->getTwin() != nullptr){
-                //if the twin of an he has the incident face outside the visible faces, it is part of the horizon
-                if(visibleFaces->count(heToRemove->getTwin()->getFace()) == 0){
-                    first = heToRemove->getTwin();
+            if(visibleHe->getTwin() != nullptr){
+                //if the twin of a visible half edge has the incident face outside the visible faces,
+                //it is part of the horizon
+                if(visibleFaces->count(visibleHe->getTwin()->getFace()) == 0){
+                    first = visibleHe->getTwin();
                     found = true;
                 }
             }
         }
     }
 
-    if(first != nullptr){
-        //prendo il resto dell'orizzonte
+    //if we found the first half edge, we follow the faces to get all the horizon,
+    //otherwise there DCEL is malformed
+    if(found){
         Dcel::HalfEdge *current, *next, *twinOfNext;
         Dcel::Face *incidentFace;
 
         current = first;
         horizon.push_front(first);
 
+        //we iterate until we get back to the first horizon half edge
         do{
             next = current->getNext();
             twinOfNext = next->getTwin();
             incidentFace = twinOfNext->getFace();
 
+            //if the incident face of the twin is visible, we have an horizon half edge
             if(visibleFaces->count(incidentFace) == 1){
                 horizon.push_back(next);
                 current = next;
@@ -186,6 +238,10 @@ std::list<Dcel::HalfEdge*> ConvexHullCreator::getHorizon(hashlib::pool<Dcel::Fac
 
 }
 
+/**
+ * @brief ConvexHullCreator::removeVisibleFaces Removes the faces in the set
+ * @param faceList set of faces to remove
+ */
 void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList){
 
     for(hashlib::pool<Dcel::Face*>::iterator it = faceList->begin(); it != faceList->end(); ++it){
@@ -200,9 +256,12 @@ void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList)
             Dcel::Vertex* end = he->getToVertex();
 
             this->dcel->deleteHalfEdge(he);
+
+            //decrement the cardinality of each vertex every time we remove an half edge
             start->decrementCardinality();
             end->decrementCardinality();
 
+            //if the cardinality is 0, the vertex is disconnected and must be removed
             if(start->getCardinality() == 0){
                 this->dcel->deleteVertex(start);
             }
@@ -221,17 +280,13 @@ void ConvexHullCreator::removeVisibleFaces(hashlib::pool<Dcel::Face*> *faceList)
  * Does a random shuffle on the input vertices vector. The first four must not be coplanar to form a tetrahedron.
  */
 void ConvexHullCreator::findValidPermutation(){
-    //get a random permutation that starts with 4 non coplanar vertices
     bool coplanar = true;
-    
-    std::srand(std::time(0));
 
     std::random_device rd;
     std::mt19937 g(rd());
 
-    //calculate a random permutation of the vertices vector
+    //compute a random permutation of the vertices vector
     std::shuffle(this->pointVec.begin(), this->pointVec.end(), g);
-
     
     do{
         //check if the first point are coplanar
@@ -288,8 +343,8 @@ void ConvexHullCreator::createTetrahedron(){
 
     double det = matrix.determinant();
 
-    //se il determinante è negativo il punto è nello stesso semispazio della normale della faccia
-    //la normale punta all'esterno, quindi il punto "vede" la faccia
+    //if the determinant is negative, the fourth vertex is in the semi-space of the face normal.
+    //We must orient the first face so the determinant is positive
     if (det < -std::numeric_limits<double>::epsilon()){
         he1In->setFromVertex(b);
         he1In->setToVertex(a);
@@ -333,21 +388,19 @@ void ConvexHullCreator::createTetrahedron(){
     he2In->setFace(face1);
     he3In->setFace(face1);
     
+    //add new faces connecting each half edge to the fourth vertex
     addFaceForTetrahedron(d, he1In);
     addFaceForTetrahedron(d, he2In);
-    addFaceForTetrahedron(d, he3In);
-
-    //checkSanity();
-    
+    addFaceForTetrahedron(d, he3In);   
 }
 
 /**
- * @brief ConvexHullCreator::addFace
- * Add a face connected to an existing vertex and an existing vertex. Used to attach new faces.
- * @param otherVertex
- * @param existingHe
+ * @brief ConvexHullCreator::addFaceForTetrahedron Adds a new face connecting the existing half edge to the vertex.
+ * Used only when creatin the initial tetrahedron because it sets the twins in an immediate way, valid only in that case.
+ * @param otherVertex Vertex in the new face
+ * @param existingHe Half edge used to connect the new face
  */
-Dcel::Face* ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
+void ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
     Dcel::HalfEdge* he1 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he3 = this->dcel->addHalfEdge();
@@ -373,7 +426,8 @@ Dcel::Face* ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, 
     startVertex->incrementCardinality();
     otherVertex->incrementCardinality();
 
-    //set the twin
+    //set the twin following the structure of the DCEL.
+    //firstly they can be null but they will be all set when all the faces are created
     if(existingHe->getPrev()->getTwin() != nullptr){
         Dcel::HalfEdge* twin = existingHe->getPrev()->getTwin()->getPrev();
         he2->setTwin(twin);
@@ -389,8 +443,8 @@ Dcel::Face* ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, 
     endVertex->incrementCardinality();
     otherVertex->incrementCardinality();
 
-    //set the twin
-    //adjustTwin(he3);
+    //set the twin following the structure of the DCEL.
+    //firstly they can be null but they will be all set when all the faces are created
     if(existingHe->getNext()->getTwin() != nullptr){
         Dcel::HalfEdge* twin = existingHe->getNext()->getTwin()->getNext();
         he3->setTwin(twin);
@@ -403,13 +457,15 @@ Dcel::Face* ConvexHullCreator::addFaceForTetrahedron(Dcel::Vertex* otherVertex, 
     he1->setFace(face);
     he2->setFace(face);
     he3->setFace(face);
-
-    //std::cout << "Aggiungo faccia " << face->getId() << std::endl;
-
-
-    return face;
 }
 
+/**
+ * @brief ConvexHullCreator::addFace Adds a new face connecting the existing half edge to the vertex.
+ * Valid in each step of the algoritm
+ * @param otherVertex Vertex in the new face
+ * @param existingHe Half edge used to connect the new face
+ * @return Pointer the the newly created face.
+ */
 Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge* existingHe){
     Dcel::HalfEdge* he1 = this->dcel->addHalfEdge();
     Dcel::HalfEdge* he2 = this->dcel->addHalfEdge();
@@ -450,15 +506,13 @@ Dcel::Face* ConvexHullCreator::addFace(Dcel::Vertex* otherVertex, Dcel::HalfEdge
     he2->setFace(face);
     he3->setFace(face);
 
-    //std::cout << "Aggiungo faccia " << face->getId() << std::endl;
-
     return face;
 }
 
 /**
- * @brief ConvexHullCreator::adjustTwin
- * Given the input half hedge, the method finds its twin set it
- * @param he
+ * @brief ConvexHullCreator::setTwins Set the twis of the faces in an ordered vector.
+ * The faces MUST be ordered
+ * @param faceList vector of ordered face
  */
 void ConvexHullCreator::setTwins(std::vector<Dcel::Face*> &faceList){
 
