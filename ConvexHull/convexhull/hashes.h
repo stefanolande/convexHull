@@ -10,7 +10,6 @@ public:
     size_t operator()(const Pointd& k) const
     {
         using std::size_t;
-        using std::hash;
         using boost::hash_combine;
 
         size_t seed = 0;
@@ -30,9 +29,14 @@ public:
     {
         using std::size_t;
         using std::hash;
+        using boost::hash_combine;
 
-        return (hash<Pointd>()(k.first)
-                ^ (hash<Dcel::Face*>()(k.second) << 1));
+        size_t seed = 0;
+
+        seed = hash<Pointd>()(k.first);
+        hash_combine(seed, k.second);
+
+        return seed;
     }
 };
 }
