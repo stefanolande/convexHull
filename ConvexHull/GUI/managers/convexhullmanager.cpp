@@ -1,6 +1,5 @@
 #include "convexhullmanager.h"
 #include "ui_convexhullmanager.h"
-#include "convexhull/convexhullcreator.h"
 
 ConvexHullManager::ConvexHullManager(QWidget *parent) : QFrame(parent), ui(new Ui::ConvexHullManager), mainWindow((MainWindow*)parent), drawableDcel(nullptr), dcelCHManager(nullptr) {
     ui->setupUi(this);

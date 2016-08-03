@@ -74,7 +74,7 @@ void ConvexHullCreator::calculate(){
  * @brief ConvexHullCreator::calculate Computes the convex hull, updating the UI at each step.
  * @param mainWindow Window to update.
  */
-void ConvexHullCreator::calculate(MainWindow* mainWindow){
+void ConvexHullCreator::calculate(MainWindow *mainWindow){
 
     getVertices();
 

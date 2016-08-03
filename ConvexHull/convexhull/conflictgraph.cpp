@@ -140,7 +140,7 @@ void ConflictGraph::insertInPconflict(Pointd point, Dcel::Face *face)
  * @param face Face for the visibility check
  * @param candidateVertices Vertices that may see the face
  */
-void ConflictGraph::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd>* candidateVertices)
+void ConflictGraph::updateConflictGraph(Dcel::Face *face, hashlib::pool<Pointd> *candidateVertices)
 {
     for(hashlib::pool<Pointd>::iterator pit = candidateVertices->begin(); pit != candidateVertices->end(); ++pit){
         if(checkVisibility(face, *pit)){
